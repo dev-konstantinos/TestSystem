@@ -53,6 +53,7 @@ namespace TestSystem
                     options.SignIn.RequireConfirmedAccount = false; // account confirmation doesnt require emails
                     options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
                 })
+                .AddRoles<IdentityRole>() // adding roles to Identity
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddSignInManager()
                 .AddDefaultTokenProviders();
