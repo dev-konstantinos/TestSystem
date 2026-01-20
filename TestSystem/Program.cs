@@ -4,12 +4,19 @@ using Microsoft.EntityFrameworkCore;
 using TestSystem.Components;
 using TestSystem.Components.Account;
 using TestSystem.Data;
+using TestSystem.Entities.Interfaces;
+using TestSystem.Entities.Services;
+using TestSystem.Infrastructure.Identity;
+using TestSystem.MainContext;
+using TestSystem.RepoLayer.Interfaces;
+using TestSystem.RepoLayer.Repositories;
+using TestSystem.ServiceLayer.Services;
 
 namespace TestSystem
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -31,11 +38,19 @@ namespace TestSystem
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(connectionString));
+            builder.Services.AddDbContext<BusinessDbContext>(options =>
+                options.UseSqlServer(connectionString));
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+            builder.Services.AddScoped<ITeacherRepository, TeacherRepository>();
+            builder.Services.AddScoped<ITeacherService, TeacherService>();
+
+            builder.Services.AddScoped<IStudentRepository, StudentRepository>();
+            builder.Services.AddScoped<IStudentService, StudentService>();
 
             builder.Services.AddIdentityCore<ApplicationUser>(options =>
                 {
-                    options.SignIn.RequireConfirmedAccount = true;
+                    options.SignIn.RequireConfirmedAccount = false; // account confirmation doesnt require emails
                     options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
                 })
                 .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -46,6 +61,28 @@ namespace TestSystem
 
             var app = builder.Build();
 
+            using (var scope = app.Services.CreateScope()) // creating possible roles list and defining admin user by default
+            {
+                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+                string[] roles = { AppRoles.Admin, AppRoles.User, AppRoles.Teacher, AppRoles.Student }; // roles with AppRoles
+
+                foreach (var role in roles)
+                    if (!await roleManager.RoleExistsAsync(role))
+                        await roleManager.CreateAsync(new IdentityRole(role));
+
+                var adminEmail = "admin@example.com";
+                var admin = await userManager.FindByEmailAsync(adminEmail);
+
+                if (admin == null)
+                {
+                    admin = new ApplicationUser { UserName = adminEmail, Email = adminEmail };
+                    await userManager.CreateAsync(admin, "Admin123!");
+                    await userManager.AddToRolesAsync(admin, new[] { AppRoles.Admin, AppRoles.User });
+                }
+            }
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
@@ -54,7 +91,6 @@ namespace TestSystem
             else
             {
                 app.UseExceptionHandler("/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
 
