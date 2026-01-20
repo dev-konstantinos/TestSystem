@@ -27,7 +27,7 @@ namespace TestSystem.MainContext
                 .HasIndex(t => t.UserId)
                 .IsUnique();
 
-            // ===== Teacher <-> Student (M2M) =====
+            // ===== Teacher <-> Student (M:M) =====
             modelBuilder.Entity<Teacher>()
                 .HasMany(t => t.Students)
                 .WithMany(s => s.Teachers)
@@ -36,7 +36,7 @@ namespace TestSystem.MainContext
                     j.ToTable("TeacherStudents");
                 });
 
-            // ===== Teacher <-> Test (M2M) =====
+            // ===== Teacher <-> Test (M:M) =====
             modelBuilder.Entity<Teacher>()
                 .HasMany(t => t.Tests)
                 .WithMany(t => t.Teachers)
@@ -73,7 +73,5 @@ namespace TestSystem.MainContext
                 .HasForeignKey(tr => tr.TestId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
-
-
     }
 }

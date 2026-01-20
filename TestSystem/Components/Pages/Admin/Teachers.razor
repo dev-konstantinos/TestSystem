@@ -1,4 +1,4 @@
-﻿@page "/admin/teachers"
+﻿@* @page "/admin/teachers"
 @using TestSystem.Entities.Interfaces
 @attribute [Authorize(Roles = "Admin")]
 @inject ITeacherService TeacherService
@@ -197,3 +197,4 @@ else
 }
 
 
+ *@

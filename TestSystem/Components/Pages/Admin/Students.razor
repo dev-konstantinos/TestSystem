@@ -1,4 +1,4 @@
-﻿@page "/admin/students"
+﻿@* @page "/admin/students"
 @using TestSystem.Entities.Interfaces
 @attribute [Authorize(Roles = "Admin")]
 @inject IStudentService StudentService
@@ -193,4 +193,4 @@ else
     }
 
     private void ClearError() => error = null;
-}
+} *@
