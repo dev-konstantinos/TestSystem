@@ -39,6 +39,8 @@ namespace TestSystem
                 options.UseSqlServer(connectionString));
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+            builder.Services.AddHttpContextAccessor(); // adding HttpContextAccessor to access HttpContext in services
+
             builder.Services.AddScoped<IUserManagementService, UserManagementService>(); // adding UserManagementService
 
             builder.Services.AddIdentityCore<ApplicationUser>(options =>

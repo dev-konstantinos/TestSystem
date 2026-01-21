@@ -6,6 +6,9 @@ using TestSystem.Entities.DTOs.User;
 using TestSystem.Infrastructure.Identity;
 using TestSystem.MainContext;
 using TestSystem.ServiceLayer.Interfaces;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
+
 
 namespace TestSystem.ServiceLayer.Services
 {
@@ -13,16 +16,18 @@ namespace TestSystem.ServiceLayer.Services
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly BusinessDbContext _businessContext;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public UserManagementService(
             UserManager<ApplicationUser> userManager,
-            BusinessDbContext businessDb)
+            BusinessDbContext businessDb,
+            IHttpContextAccessor httpContextAccessor)
         {
             _userManager = userManager;
             _businessContext = businessDb;
+            _httpContextAccessor = httpContextAccessor;
         }
 
-        // method gets all users with their roles
         public async Task<List<UserAdminDto>> GetAllAsync()
         {
             var users = await _userManager.Users.ToListAsync();
@@ -55,11 +60,24 @@ namespace TestSystem.ServiceLayer.Services
             return result;
         }
 
-        // method adds or removes a role from a user
         public async Task SetRoleAsync(string userId, string role, bool enabled)
         {
             var user = await _userManager.FindByIdAsync(userId)
                 ?? throw new InvalidOperationException("User not found");
+
+            // SERVER-SIDE SELF-ADMIN PROTECTION
+            var currentUserId = _httpContextAccessor.HttpContext?
+                .User?
+                .FindFirst(ClaimTypes.NameIdentifier)?
+                .Value;
+
+            if (role == AppRoles.Admin &&
+                userId == currentUserId &&
+                !enabled)
+            {
+                throw new InvalidOperationException(
+                    "You cannot remove Admin role from yourself");
+            }
 
             if (enabled)
             {
@@ -72,8 +90,6 @@ namespace TestSystem.ServiceLayer.Services
                     await _userManager.RemoveFromRoleAsync(user, role);
             }
 
-            // Sync related entities
-
             if (role == AppRoles.Student)
                 await SyncStudent(userId, enabled);
 
@@ -81,7 +97,6 @@ namespace TestSystem.ServiceLayer.Services
                 await SyncTeacher(userId, enabled);
         }
 
-        // helper methods to sync Student entities
         private async Task SyncStudent(string userId, bool enabled)
         {
             var student = await _businessContext.Students
@@ -100,7 +115,6 @@ namespace TestSystem.ServiceLayer.Services
             }
         }
 
-        // helper method to sync Teacher entities
         private async Task SyncTeacher(string userId, bool enabled)
         {
             var teacher = await _businessContext.Teachers

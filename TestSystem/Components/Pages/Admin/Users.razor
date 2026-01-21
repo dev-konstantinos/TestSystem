@@ -1,12 +1,14 @@
 ﻿@page "/admin/users"
 
 @using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
 @using TestSystem.Entities.DTOs.User
 @using TestSystem.Infrastructure.Identity
 
 @attribute [Authorize(Roles = AppRoles.Admin)]
 
 @inject IUserManagementService UserService
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>User Management</PageTitle>
 
@@ -25,6 +27,14 @@ else if (!string.IsNullOrEmpty(error))
 }
 else
 {
+    <select class="form-select mb-3" @onchange="OnFilterChanged">
+        <option value="all">All users</option>
+        <option value="admins">Admins</option>
+        <option value="students">Students</option>
+        <option value="teachers">Teachers</option>
+        <option value="none">Without role</option>
+    </select>
+
     <div class="table-responsive">
         <table class="table table-bordered table-hover align-middle">
             <thead class="table-light">
@@ -37,7 +47,7 @@ else
                 </tr>
             </thead>
             <tbody>
-                @foreach (var u in users)
+                @foreach (var u in filteredUsers)
                 {
                     <tr>
                         <td>@u.Email</td>
@@ -47,6 +57,7 @@ else
                             <input type="checkbox"
                                    class="form-check-input"
                                    checked="@u.IsAdmin"
+                                   disabled="@(u.UserId == currentUserId)"
                                    @onchange="async e => await ChangeRole(u, AppRoles.Admin, (bool)e.Value!)" />
                         </td>
 
@@ -82,10 +93,26 @@ else
 @code {
     private List<UserAdminDto> users = new();
     private bool isLoading = true;
+    private string? currentUserId;
+    private string filter = "all";
     private string? error;
 
+    private IEnumerable<UserAdminDto> filteredUsers => filter switch
+    {
+        "admins" => users.Where(u => u.IsAdmin),
+        "students" => users.Where(u => u.IsStudent),
+        "teachers" => users.Where(u => u.IsTeacher),
+        "none" => users.Where(u => !u.IsStudent && !u.IsTeacher),
+        _ => users
+    };
+
     protected override async Task OnInitializedAsync()
-        => await Load();
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        await Load();
+    }
 
     private async Task Load()
     {
@@ -116,6 +143,9 @@ else
             error = ex.Message;
         }
     }
+
+    private void OnFilterChanged(ChangeEventArgs e)
+        => filter = e.Value?.ToString() ?? "all";
 
     private void ClearError() => error = null;
 }
