@@ -1,0 +1,49 @@
+﻿using Microsoft.EntityFrameworkCore;
+using TestSystem.Entities.DTOs.Teacher;
+using TestSystem.MainContext;
+using TestSystem.ServiceLayer.Interfaces;
+
+namespace TestSystem.ServiceLayer.Services
+{
+    public class TeacherDashboardService : ITeacherDashboardService
+    {
+        private readonly BusinessDbContext _businessContext;
+
+        public TeacherDashboardService(BusinessDbContext db)
+        {
+            _businessContext = db;
+        }
+
+        public async Task<TeacherDashboardDto?> GetDashboardAsync(string userId)
+        {
+            var teacher = await _businessContext.Teachers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.UserId == userId);
+
+            if (teacher == null)
+                return null;
+
+            var studentsCount = await _businessContext.Teachers
+                .Where(t => t.Id == teacher.Id)
+                .SelectMany(t => t.Students)
+                .CountAsync();
+
+            var testsCount = await _businessContext.Teachers
+                .Where(t => t.Id == teacher.Id)
+                .SelectMany(t => t.Tests)
+                .CountAsync();
+
+            var resultsCount = await _businessContext.TestResults
+                .CountAsync(r =>
+                    r.Test.Teachers.Any(t => t.Id == teacher.Id));
+
+            return new TeacherDashboardDto
+            {
+                TeacherId = teacher.Id,
+                StudentsCount = studentsCount,
+                TestsCount = testsCount,
+                ResultsCount = resultsCount
+            };
+        }
+    }
+}

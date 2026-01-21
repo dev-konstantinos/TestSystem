@@ -1,6 +1,10 @@
-﻿@implements IDisposable
+﻿@using Microsoft.EntityFrameworkCore
+@using TestSystem.MainContext
+@implements IDisposable
 
 @inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthStateProvider
+@inject BusinessDbContext BusinessDb
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -66,6 +70,7 @@
                 </div>
             </NotAuthorized>
         </AuthorizeView>
+
         <AuthorizeView Roles="@AppRoles.Admin">
             <Authorized>
                 <div class="nav-item px-3">
@@ -75,16 +80,43 @@
                 </div>
             </Authorized>
         </AuthorizeView>
+
+        <AuthorizeView>
+            <Authorized>
+                @if (isTeacher)
+                {
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="teacher">
+                            <span class="bi bi-mortarboard-fill-nav-menu"></span> Teacher
+                        </NavLink>
+                    </div>
+                }
+            </Authorized>
+        </AuthorizeView>
+
     </nav>
 </div>
 
 @code {
     private string? currentUrl;
+    private bool isTeacher;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
         NavigationManager.LocationChanged += OnLocationChanged;
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = authState.User
+            .FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)
+            ?.Value;
+
+        if (userId != null)
+        {
+            isTeacher = await BusinessDb.Teachers
+                .AsNoTracking()
+                .AnyAsync(t => t.UserId == userId);
+        }
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)

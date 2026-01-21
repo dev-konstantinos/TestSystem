@@ -1,0 +1,68 @@
+﻿@page "/teacher"
+@using System.Security.Claims
+@using TestSystem.Entities.DTOs.Teacher
+
+@inject ITeacherDashboardService TeacherService
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Teacher dashboard</PageTitle>
+
+<h3 class="mb-4">Teacher dashboard</h3>
+
+@if (isLoading)
+{
+    <p class="text-muted">Loading...</p>
+}
+else if (dashboard == null)
+{
+    <div class="alert alert-warning">
+        You are not assigned as a teacher.
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h6>Students</h6>
+                    <h2>@dashboard.StudentsCount</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h6>Tests</h6>
+                    <h2>@dashboard.TestsCount</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h6>Results</h6>
+                    <h2>@dashboard.ResultsCount</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private TeacherDashboardDto? dashboard;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (userId != null)
+            dashboard = await TeacherService.GetDashboardAsync(userId);
+
+        isLoading = false;
+    }
+}

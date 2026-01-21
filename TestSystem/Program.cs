@@ -42,6 +42,8 @@ namespace TestSystem
             builder.Services.AddHttpContextAccessor(); // adding HttpContextAccessor to access HttpContext in services
 
             builder.Services.AddScoped<IUserManagementService, UserManagementService>(); // adding UserManagementService
+            builder.Services.AddScoped<ITeacherDashboardService, TeacherDashboardService>(); // adding TeacherDashboardService
+
 
             builder.Services.AddIdentityCore<ApplicationUser>(options =>
                 {
