@@ -1,9 +1,12 @@
 ﻿@page "/teacher"
 @using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
 @using TestSystem.Entities.DTOs.Teacher
 
 @inject ITeacherDashboardService TeacherService
 @inject AuthenticationStateProvider AuthStateProvider
+
+@attribute [Authorize]
 
 <PageTitle>Teacher dashboard</PageTitle>
 
@@ -23,12 +26,14 @@ else
 {
     <div class="row g-3">
         <div class="col-md-4">
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <h6>Students</h6>
-                    <h2>@dashboard.StudentsCount</h2>
+            <NavLink href="/teacher/students" class="text-decoration-none text-dark">
+                <div class="card shadow-sm hover-pointer">
+                    <div class="card-body text-center">
+                        <h6>Students</h6>
+                        <h2>@dashboard.StudentsCount</h2>
+                    </div>
                 </div>
-            </div>
+            </NavLink>
         </div>
 
         <div class="col-md-4">

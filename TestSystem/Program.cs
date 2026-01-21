@@ -33,17 +33,28 @@ namespace TestSystem
                 .AddIdentityCookies();
 
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+            // adding ApplicationDbContext and BusinessDbContext
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(connectionString));
+
+            // adding BusinessDbContext for main application data - replace with DbContextFactory to resolve issues with a lifetime!!!
             builder.Services.AddDbContext<BusinessDbContext>(options =>
                 options.UseSqlServer(connectionString));
+
+            // adding DbContextFactory for BusinessDbContext - alternative approach to resolve lifetime issues with BusinessDbContext
+            //builder.Services.AddDbContextFactory<BusinessDbContext>(options =>
+            //    options.UseSqlServer(connectionString));
+
+            // adding database exception filter for development
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-            builder.Services.AddHttpContextAccessor(); // adding HttpContextAccessor to access HttpContext in services
+            // adding HttpContextAccessor to access HttpContext in services
+            builder.Services.AddHttpContextAccessor();
 
-            builder.Services.AddScoped<IUserManagementService, UserManagementService>(); // adding UserManagementService
-            builder.Services.AddScoped<ITeacherDashboardService, TeacherDashboardService>(); // adding TeacherDashboardService
-
+            builder.Services.AddScoped<IUserManagementService, UserManagementService>();
+            builder.Services.AddScoped<ITeacherDashboardService, TeacherDashboardService>();
+            builder.Services.AddScoped<ITeacherStudentsService, TeacherStudentsService>();
 
             builder.Services.AddIdentityCore<ApplicationUser>(options =>
                 {

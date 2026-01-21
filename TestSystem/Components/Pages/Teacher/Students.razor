@@ -1,0 +1,84 @@
+﻿@page "/teacher/students"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using TestSystem.Entities.DTOs.Teacher
+
+@inject ITeacherStudentsService StudentsService
+@inject AuthenticationStateProvider AuthStateProvider
+
+@attribute [Authorize]
+
+<NavLink href="/teacher" class="btn btn-outline-secondary mb-3">
+    ← Back to dashboard
+</NavLink>
+
+<h3 class="mb-4">My students</h3>
+
+@if (isLoading)
+{
+    <p class="text-muted">Loading...</p>
+}
+else if (!isTeacher)
+{
+    <div class="alert alert-warning">
+        You are not assigned as a teacher.
+    </div>
+}
+else if (!students.Any())
+{
+    <div class="alert alert-info">
+        You have no assigned students.
+    </div>
+}
+else
+{
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Enrolled</th>
+                <th class="text-center">Tests</th>
+                <th class="text-center">Avg score</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in students)
+            {
+                <tr>
+                    <td>@s.FullName</td>
+                    <td>@s.Email</td>
+                    <td>@s.EnrolledDate.ToString("dd.MM.yyyy")</td>
+                    <td class="text-center">@s.TestsPassed</td>
+                    <td class="text-center">
+                        @(s.AverageScore?.ToString("0.0") ?? "-")
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<TeacherStudentDto> students = new();
+    private bool isLoading = true;
+    private bool isTeacher;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (userId == null)
+        {
+            isLoading = false;
+            return;
+        }
+
+        students = await StudentsService.GetMyStudentsAsync(userId);
+
+        isTeacher = students != null;
+
+        isLoading = false;
+    }
+}
