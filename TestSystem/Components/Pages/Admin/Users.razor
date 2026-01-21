@@ -1,0 +1,121 @@
+﻿@page "/admin/users"
+
+@using Microsoft.AspNetCore.Authorization
+@using TestSystem.Entities.DTOs.User
+@using TestSystem.Infrastructure.Identity
+
+@attribute [Authorize(Roles = AppRoles.Admin)]
+
+@inject IUserManagementService UserService
+
+<PageTitle>User Management</PageTitle>
+
+<h3 class="text-primary mb-4">User Management</h3>
+
+@if (isLoading)
+{
+    <p class="text-muted">Loading users...</p>
+}
+else if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @error
+        <button type="button" class="btn-close" @onclick="ClearError"></button>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Email</th>
+                    <th>Name</th>
+                    <th class="text-center">Admin</th>
+                    <th class="text-center">Student</th>
+                    <th class="text-center">Teacher</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var u in users)
+                {
+                    <tr>
+                        <td>@u.Email</td>
+                        <td>@($"{u.FirstName} {u.LastName}")</td>
+
+                        <td class="text-center">
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   checked="@u.IsAdmin"
+                                   @onchange="async e => await ChangeRole(u, AppRoles.Admin, (bool)e.Value!)" />
+                        </td>
+
+                        <td class="text-center">
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   checked="@u.IsStudent"
+                                   @onchange="async e => await ChangeRole(u, AppRoles.Student, (bool)e.Value!)" />
+                        </td>
+
+                        <td class="text-center">
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   checked="@u.IsTeacher"
+                                   @onchange="async e => await ChangeRole(u, AppRoles.Teacher, (bool)e.Value!)" />
+                        </td>
+                    </tr>
+                }
+
+                @if (!users.Any())
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-muted fst-italic py-4">
+                            No users found
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<UserAdminDto> users = new();
+    private bool isLoading = true;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+        => await Load();
+
+    private async Task Load()
+    {
+        try
+        {
+            isLoading = true;
+            users = await UserService.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ChangeRole(UserAdminDto user, string role, bool enabled)
+    {
+        try
+        {
+            await UserService.SetRoleAsync(user.UserId, role, enabled);
+            await Load(); // simpler to reload the list to reflect changes
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+    }
+
+    private void ClearError() => error = null;
+}

@@ -4,12 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using TestSystem.Components;
 using TestSystem.Components.Account;
 using TestSystem.Data;
-using TestSystem.Entities.Interfaces;
-using TestSystem.Entities.Services;
 using TestSystem.Infrastructure.Identity;
 using TestSystem.MainContext;
-using TestSystem.RepoLayer.Interfaces;
-using TestSystem.RepoLayer.Repositories;
+using TestSystem.ServiceLayer.Interfaces;
 using TestSystem.ServiceLayer.Services;
 
 namespace TestSystem
@@ -42,11 +39,7 @@ namespace TestSystem
                 options.UseSqlServer(connectionString));
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-            builder.Services.AddScoped<ITeacherRepository, TeacherRepository>();
-            builder.Services.AddScoped<ITeacherService, TeacherService>();
-
-            builder.Services.AddScoped<IStudentRepository, StudentRepository>();
-            builder.Services.AddScoped<IStudentService, StudentService>();
+            builder.Services.AddScoped<IUserManagementService, UserManagementService>(); // adding UserManagementService
 
             builder.Services.AddIdentityCore<ApplicationUser>(options =>
                 {
