@@ -1,0 +1,176 @@
+﻿@page "/teacher/tests/{TestId:int}"
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using TestSystem.Entities.DTOs.Teacher
+
+@inject ITeacherTestEditorService EditorService
+@inject AuthenticationStateProvider AuthStateProvider
+
+@attribute [Authorize]
+
+<NavLink href="/teacher/tests" class="btn btn-outline-secondary mb-3">
+    ← Back to tests
+</NavLink>
+
+<h3 class="mb-4">Test editor</h3>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-2">
+            <div class="col-md-8">
+                <input class="form-control"
+                       placeholder="Question text"
+                       @bind="newQuestionText" />
+            </div>
+
+            <div class="col-md-2">
+                <input type="number"
+                       class="form-control"
+                       min="1"
+                       @bind="newQuestionPoints" />
+            </div>
+
+            <div class="col-md-2 d-grid">
+                <button class="btn btn-primary"
+                        disabled="@string.IsNullOrWhiteSpace(newQuestionText)"
+                        @onclick="AddQuestion">
+                    Add question
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@foreach (var q in questions)
+{
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <strong>@q.Text</strong>
+                <button class="btn btn-sm btn-outline-danger"
+                        @onclick="() => DeleteQuestion(q.QuestionId)">
+                    Delete
+                </button>
+            </div>
+
+            <div class="text-muted mb-2">
+                Points: @q.Points
+            </div>
+
+            <ul class="list-group mb-2">
+                @foreach (var o in q.Options) // System.Collections.Generic.KeyNotFoundException: 'The given key '1' was not present in the dictionary.'
+                {
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>
+                            @if (o.IsCorrect)
+                            {
+                                <strong>✔</strong>
+                            }
+                            @o.Text
+                        </span>
+
+                        <button class="btn btn-sm btn-outline-danger"
+                                @onclick="() => DeleteOption(o.OptionId)">
+                            ×
+                        </button>
+                    </li>
+                }
+            </ul>
+
+            <div class="input-group">
+                <input class="form-control"
+                       placeholder="Option text"
+                       @bind="optionText[q.QuestionId]" />
+
+                <div class="input-group-text">
+                    <input type="checkbox"
+                           @bind="optionCorrect[q.QuestionId]" />
+                    Correct
+                </div>
+
+                <button class="btn btn-outline-primary"
+                        @onclick="() => AddOption(q.QuestionId)">
+                    Add
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int TestId { get; set; }
+
+    private List<TeacherQuestionDto> questions = new();
+
+    private string? newQuestionText;
+    private int newQuestionPoints = 1;
+
+    private Dictionary<int, string> optionText = new();
+    private Dictionary<int, bool> optionCorrect = new();
+
+    private string? userId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        if (userId == null)
+            return;
+
+        questions = await EditorService.GetQuestionsAsync(userId, TestId);
+
+        foreach (var q in questions)
+        {
+            if (!optionText.ContainsKey(q.QuestionId))
+                optionText[q.QuestionId] = "";
+
+            if (!optionCorrect.ContainsKey(q.QuestionId))
+                optionCorrect[q.QuestionId] = false;
+        }
+    }
+
+    private async Task AddQuestion()
+    {
+        await EditorService.AddQuestionAsync(userId!, TestId, newQuestionText!, newQuestionPoints);
+        newQuestionText = null;
+        newQuestionPoints = 1;
+        await Load();
+    }
+
+    private async Task DeleteQuestion(int id)
+    {
+        await EditorService.DeleteQuestionAsync(userId!, id);
+        await Load();
+    }
+
+    private async Task AddOption(int questionId)
+    {
+        if (!optionText.ContainsKey(questionId))
+            return;
+
+        await EditorService.AddOptionAsync(
+            userId!,
+            questionId,
+            optionText[questionId],
+            optionCorrect.GetValueOrDefault(questionId)
+        );
+
+        optionText[questionId] = "";
+        optionCorrect[questionId] = false;
+
+        await Load();
+    }
+
+    private async Task DeleteOption(int optionId)
+    {
+        await EditorService.DeleteOptionAsync(userId!, optionId);
+        await Load();
+    }
+}

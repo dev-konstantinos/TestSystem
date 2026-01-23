@@ -76,6 +76,9 @@ else
                     <td class="text-center">@t.MaxScore</td>
                     <td class="text-center">@t.CreatedDate.ToString("dd.MM.yyyy")</td>
                     <td class="text-center">
+                        <NavLink class="btn btn-sm btn-outline-primary me-2"
+                                 href="@($"/teacher/tests/{t.TestId}")"> Edit
+                        </NavLink>
                         <button class="btn btn-sm btn-outline-danger"
                                 @onclick="() => DeleteTest(t.TestId)">
                             Delete
