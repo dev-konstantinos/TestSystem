@@ -1,4 +1,5 @@
 ﻿@page "/teacher/students"
+
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
 @using TestSystem.Entities.DTOs.Teacher
@@ -12,7 +13,19 @@
     ← Back to dashboard
 </NavLink>
 
-<h3 class="mb-4">My students</h3>
+<h3 class="mb-3">My students</h3>
+
+<div class="mb-3">
+    <button class="btn btn-sm @(mode == PageMode.List ? "btn-primary" : "btn-outline-primary") me-2"
+            @onclick="() => mode = PageMode.List">
+        My students
+    </button>
+
+    <button class="btn btn-sm @(mode == PageMode.Attach ? "btn-primary" : "btn-outline-primary")"
+            @onclick="() => mode = PageMode.Attach">
+        Add students
+    </button>
+</div>
 
 @if (isLoading)
 {
@@ -24,50 +37,107 @@ else if (!isTeacher)
         You are not assigned as a teacher.
     </div>
 }
-else if (!students.Any())
-{
-    <div class="alert alert-info">
-        You have no assigned students.
-    </div>
-}
 else
 {
-    <table class="table table-bordered table-hover align-middle">
-        <thead class="table-light">
-            <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Enrolled</th>
-                <th class="text-center">Tests</th>
-                <th class="text-center">Avg score</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var s in students)
-            {
-                <tr>
-                    <td>@s.FullName</td>
-                    <td>@s.Email</td>
-                    <td>@s.EnrolledDate.ToString("dd.MM.yyyy")</td>
-                    <td class="text-center">@s.TestsPassed</td>
-                    <td class="text-center">
-                        @(s.AverageScore?.ToString("0.0") ?? "-")
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    @* ===== LIST MODE ===== *@
+    @if (mode == PageMode.List)
+    {
+        if (!students.Any())
+        {
+            <div class="alert alert-info">
+                You have no assigned students.
+            </div>
+        }
+        else
+        {
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Enrolled</th>
+                        <th class="text-center">Tests</th>
+                        <th class="text-center">Avg score</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in students)
+                    {
+                        <tr>
+                            <td>@s.FullName</td>
+                            <td>@s.Email</td>
+                            <td>@s.EnrolledDate.ToString("dd.MM.yyyy")</td>
+                            <td class="text-center">@s.TestsPassed</td>
+                            <td class="text-center">
+                                @(s.AverageScore?.ToString("0.0") ?? "-")
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-danger"
+                                        @onclick="() => Detach(s.StudentId)">
+                                    Remove
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    }
+
+    @* ===== ATTACH MODE ===== *@
+    @if (mode == PageMode.Attach)
+    {
+        if (!availableStudents.Any())
+        {
+            <div class="alert alert-info">
+                No students available to add.
+            </div>
+        }
+        else
+        {
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in availableStudents)
+                    {
+                        <tr>
+                            <td>@s.FullName</td>
+                            <td>@s.Email</td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-success"
+                                        @onclick="() => Attach(s.StudentId)">
+                                    Add
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    }
 }
 
 @code {
     private List<TeacherStudentDto> students = new();
+    private List<TeacherStudentDto> availableStudents = new();
+
     private bool isLoading = true;
     private bool isTeacher;
+    private string? userId;
+
+    private PageMode mode = PageMode.List;
 
     protected override async Task OnInitializedAsync()
     {
         var auth = await AuthStateProvider.GetAuthenticationStateAsync();
-        var userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (userId == null)
         {
@@ -75,10 +145,33 @@ else
             return;
         }
 
-        students = await StudentsService.GetMyStudentsAsync(userId);
-
-        isTeacher = students != null;
-
+        await Load();
+        isTeacher = true;
         isLoading = false;
+    }
+
+    private async Task Load()
+    {
+        students = await StudentsService.GetMyStudentsAsync(userId!);
+        availableStudents = await StudentsService.GetAvailableStudentsAsync(userId!);
+    }
+
+    private async Task Attach(int studentId)
+    {
+        await StudentsService.AttachStudentAsync(userId!, studentId);
+        await Load();
+        mode = PageMode.List;
+    }
+
+    private async Task Detach(int studentId)
+    {
+        await StudentsService.DetachStudentAsync(userId!, studentId);
+        await Load();
+    }
+
+    private enum PageMode
+    {
+        List,
+        Attach
     }
 }

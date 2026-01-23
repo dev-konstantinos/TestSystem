@@ -1,0 +1,138 @@
+﻿@page "/teacher/tests"
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using TestSystem.Entities.DTOs.Teacher
+
+@inject ITeacherTestsService TestsService
+@inject AuthenticationStateProvider AuthStateProvider
+
+@attribute [Authorize]
+
+<NavLink href="/teacher" class="btn btn-outline-secondary mb-3">
+    ← Back to dashboard
+</NavLink>
+
+<h3 class="mb-4">My tests</h3>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h6 class="mb-3">Add new test</h6>
+
+        <div class="row g-2">
+            <div class="col-md-4">
+                <input class="form-control"
+                       placeholder="Title"
+                       @bind="newTitle" />
+            </div>
+
+            <div class="col-md-6">
+                <input class="form-control"
+                       placeholder="Description (optional)"
+                       @bind="newDescription" />
+            </div>
+
+            <div class="col-md-2 d-grid">
+                <button class="btn btn-primary"
+                        disabled="@string.IsNullOrWhiteSpace(newTitle)"
+                        @onclick="AddTest">
+                    Add
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <p class="text-muted">Loading...</p>
+}
+else if (!tests.Any())
+{
+    <div class="alert alert-info">
+        You have no tests yet.
+    </div>
+}
+else
+{
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Title</th>
+                <th>Description</th>
+                <th class="text-center">Questions</th>
+                <th class="text-center">Max score</th>
+                <th class="text-center">Created</th>
+                <th class="text-center">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var t in tests)
+            {
+                <tr>
+                    <td>@t.Title</td>
+                    <td>@t.Description</td>
+                    <td class="text-center">@t.QuestionsCount</td>
+                    <td class="text-center">@t.MaxScore</td>
+                    <td class="text-center">@t.CreatedDate.ToString("dd.MM.yyyy")</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-danger"
+                                @onclick="() => DeleteTest(t.TestId)">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<TeacherTestDto> tests = new();
+    private bool isLoading = true;
+
+    private string? newTitle;
+    private string? newDescription;
+
+    private string? userId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        if (userId == null)
+            return;
+
+        isLoading = true;
+        tests = await TestsService.GetMyTestsAsync(userId);
+        isLoading = false;
+    }
+
+    private async Task AddTest()
+    {
+        if (userId == null)
+            return;
+
+        await TestsService.AddTestAsync(userId, newTitle!, newDescription);
+
+        newTitle = null;
+        newDescription = null;
+
+        await Load();
+    }
+
+    private async Task DeleteTest(int testId)
+    {
+        if (userId == null)
+            return;
+
+        await TestsService.DeleteTestAsync(userId, testId);
+        await Load();
+    }
+}

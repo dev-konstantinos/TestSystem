@@ -1,9 +1,14 @@
+overall: ************************************************************************************************************************
+
+1) Replace InvalidOperationException with custom exceptions for better error handling.
+
 admin/users: ******************************************************************************************************************
 
 1) Optimize the user list loading time with GetAllAsync method in UserManagementService.cs
 
-TeacherDashboardService: ******************************************************************************************************
+Services: ******************************************************************************************************
 
-1) Find and fix the bug causing incorrect race condition when multiple teachers access the dashboard in TeacherDashboardService.cs
-Possible solution: use Factory instead of BusinessDbContext directly to ensure thread safety. Can cause problems!
+1) Fast access or page reload causes race conditions in BusinessDbContext usage. Possible solution: use Factory instead of BusinessDbContext directly to ensure thread safety. Can cause problems!
+
+2) Find and fix bugs that occurs when teacher logs out and Admin logs in without restarting the application.
 
