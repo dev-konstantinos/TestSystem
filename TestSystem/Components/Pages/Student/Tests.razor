@@ -1,0 +1,78 @@
+﻿@page "/student/tests"
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using TestSystem.Entities.DTOs.Student
+
+@inject IStudentTestsService TestsService
+@inject AuthenticationStateProvider AuthProvider
+
+@attribute [Authorize]
+
+<NavLink href="/student" class="btn btn-outline-secondary mb-3">
+    ← Back to dashboard
+</NavLink>
+
+<PageTitle>Available tests</PageTitle>
+
+<h3 class="mb-4">Available tests</h3>
+
+@if (isLoading)
+{
+    <p class="text-muted">Loading...</p>
+}
+else if (!tests.Any())
+{
+    <div class="alert alert-info">
+        No tests available.
+    </div>
+}
+else
+{
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Title</th>
+                <th>Teacher</th>
+                <th class="text-center">Questions</th>
+                <th class="text-center">Max score</th>
+                <th class="text-center"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var t in tests)
+            {
+                <tr>
+                    <td>@t.Title</td>
+                    <td>@t.TeacherName</td>
+                    <td class="text-center">@t.QuestionsCount</td>
+                    <td class="text-center">@t.MaxScore</td>
+                    <td class="text-center">
+                        <NavLink class="btn btn-sm btn-primary"
+                                 href="@($"/student/tests/{t.TestId}")">
+                            Start
+                        </NavLink>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<StudentAvailableTestDto> tests = new();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthProvider.GetAuthenticationStateAsync();
+        var userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (userId != null)
+        {
+            tests = await TestsService.GetAvailableTestsAsync(userId);
+        }
+
+        isLoading = false;
+    }
+}

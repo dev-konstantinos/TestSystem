@@ -1,0 +1,67 @@
+﻿@page "/student/teachers"
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using TestSystem.Entities.DTOs.Student
+
+@inject IStudentTeachersService TeachersService
+@inject AuthenticationStateProvider AuthStateProvider
+
+@attribute [Authorize]
+
+<NavLink href="/student" class="btn btn-outline-secondary mb-3">
+    ← Back to dashboard
+</NavLink>
+
+<h3 class="mb-4">My teachers</h3>
+
+@if (isLoading)
+{
+    <p class="text-muted">Loading...</p>
+}
+else if (!teachers.Any())
+{
+    <div class="alert alert-info">
+        You are not assigned to any teachers.
+    </div>
+}
+else
+{
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th class="text-center">Tests</th>
+                <th class="text-center">Joined</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var t in teachers)
+            {
+                <tr>
+                    <td>@t.FullName</td>
+                    <td>@t.Email</td>
+                    <td class="text-center">@t.TestsCount</td>
+                    <td class="text-center">@t.JoinedDate.ToString("dd.MM.yyyy")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<StudentTeacherDto> teachers = new();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (userId != null)
+            teachers = await TeachersService.GetMyTeachersAsync(userId);
+
+        isLoading = false;
+    }
+}

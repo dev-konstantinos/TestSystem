@@ -9,6 +9,10 @@
 
 @attribute [Authorize]
 
+<NavLink href="/student" class="btn btn-outline-secondary mb-3">
+    ← Back to dashboard
+</NavLink>
+
 <NavLink href="/teacher/tests" class="btn btn-outline-secondary mb-3">
     ← Back to tests
 </NavLink>
@@ -59,7 +63,7 @@
             </div>
 
             <ul class="list-group mb-2">
-                @foreach (var o in q.Options) // System.Collections.Generic.KeyNotFoundException: 'The given key '1' was not present in the dictionary.'
+                @foreach (var o in q.Options)
                 {
                     <li class="list-group-item d-flex justify-content-between">
                         <span>

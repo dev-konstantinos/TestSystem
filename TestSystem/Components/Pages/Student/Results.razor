@@ -1,0 +1,56 @@
+﻿@page "/student/results"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using TestSystem.Entities.DTOs.Student
+
+@inject IStudentResultsService ResultsService
+@inject AuthenticationStateProvider Auth
+
+@attribute [Authorize]
+
+<h3 class="mb-4">My results</h3>
+
+@if (!results.Any())
+{
+    <div class="alert alert-info">
+        No completed tests yet.
+    </div>
+}
+else
+{
+    <table class="table table-bordered table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>Test</th>
+                <th class="text-center">Score</th>
+                <th class="text-center">Max</th>
+                <th class="text-center">Completed</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in results)
+            {
+                <tr>
+                    <td>@r.TestTitle</td>
+                    <td class="text-center">@r.Score</td>
+                    <td class="text-center">@r.MaxScore</td>
+                    <td class="text-center">
+                        @r.CompletedDate.ToString("dd.MM.yyyy HH:mm")
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<StudentResultDto> results = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await Auth.GetAuthenticationStateAsync();
+        var userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        results = await ResultsService.GetMyResultsAsync(userId!);
+    }
+}

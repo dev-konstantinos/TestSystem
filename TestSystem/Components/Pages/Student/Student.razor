@@ -1,16 +1,16 @@
-﻿@page "/teacher"
+﻿@page "/student"
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
-@using TestSystem.Entities.DTOs.Teacher
+@using TestSystem.Entities.DTOs.Student
 
-@inject ITeacherDashboardService TeacherService
+@inject IStudentDashboardService StudentService
 @inject AuthenticationStateProvider AuthStateProvider
 
 @attribute [Authorize]
 
-<PageTitle>Teacher dashboard</PageTitle>
+<PageTitle>Student dashboard</PageTitle>
 
-<h3 class="mb-4">Teacher dashboard</h3>
+<h3 class="mb-4">Student dashboard</h3>
 
 @if (isLoading)
 {
@@ -19,49 +19,49 @@
 else if (dashboard == null)
 {
     <div class="alert alert-warning">
-        You are not assigned as a teacher.
+        You are not assigned as a student.
     </div>
 }
 else
 {
     <div class="row g-3">
         <div class="col-md-4">
-            <NavLink href="/teacher/students" class="text-decoration-none text-dark">
+            <NavLink href="/student/teachers" class="text-decoration-none text-dark">
                 <div class="card shadow-sm hover-pointer">
                     <div class="card-body text-center">
-                        <h6>Students</h6>
-                        <h2>@dashboard.StudentsCount</h2>
+                        <h6>Teachers</h6>
+                        <h2>@dashboard.TeachersCount</h2>
                     </div>
                 </div>
             </NavLink>
         </div>
 
         <div class="col-md-4">
-            <NavLink href="/teacher/tests" class="text-decoration-none text-dark">
+            <NavLink href="/student/tests" class="text-decoration-none text-dark">
                 <div class="card shadow-sm hover-pointer">
                     <div class="card-body text-center">
                         <h6>Tests</h6>
-                        <h2>@dashboard.TestsCount</h2>
+                        <h2>@dashboard.AvailableTestsCount</h2>
                     </div>
                 </div>
             </NavLink>
         </div>
 
         <div class="col-md-4">
-            <NavLink href="/teacher/results" class="text-decoration-none text-dark">
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <h6>Results</h6>
-                    <h2>@dashboard.ResultsCount</h2>
+            <NavLink href="/student/results" class="text-decoration-none text-dark">
+                <div class="card shadow-sm hover-pointer">
+                    <div class="card-body text-center">
+                        <h6>Results</h6>
+                        <h2>@dashboard.ResultsCount</h2>
+                    </div>
                 </div>
-            </div>
             </NavLink>
         </div>
     </div>
 }
 
 @code {
-    private TeacherDashboardDto? dashboard;
+    private StudentDashboardDto? dashboard;
     private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
@@ -70,7 +70,7 @@ else
         var userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (userId != null)
-            dashboard = await TeacherService.GetDashboardAsync(userId);
+            dashboard = await StudentService.GetDashboardAsync(userId);
 
         isLoading = false;
     }

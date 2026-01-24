@@ -1,0 +1,72 @@
+﻿@page "/student/tests/{TestId:int}"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using TestSystem.Entities.DTOs.Student
+
+@inject IStudentTestPassingService Service
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager NavManager
+
+@attribute [Authorize]
+
+<h3 class="mb-4">@test?.Title</h3>
+
+@if (test == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    @foreach (var q in test.Questions)
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                <strong>@q.Text</strong>
+
+                @foreach (var o in q.Options)
+                {
+                    <div class="form-check">
+                        <input class="form-check-input"
+                               type="radio"
+                               name="q@q.QuestionId"
+                               @onchange="() => answers[q.QuestionId] = o.OptionId" />
+                        <label class="form-check-label">
+                            @o.Text
+                        </label>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <button class="btn btn-success" @onclick="Submit">
+        Submit test
+    </button>
+}
+
+@code {
+    [Parameter] public int TestId { get; set; }
+
+    private StudentTestDto? test;
+    private Dictionary<int, int> answers = new();
+    private string? userId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthProvider.GetAuthenticationStateAsync();
+        userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        test = await Service.GetTestAsync(userId!, TestId);
+    }
+
+    private async Task Submit()
+    {
+        await Service.SubmitAsync(userId!, new StudentTestSubmitDto
+        {
+            TestId = TestId,
+            Answers = answers
+        });
+
+        NavManager.NavigateTo("/student/results");
+    }
+}

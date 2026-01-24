@@ -57,6 +57,13 @@ namespace TestSystem
             builder.Services.AddScoped<ITeacherStudentsService, TeacherStudentsService>();
             builder.Services.AddScoped<ITeacherTestsService, TeacherTestsService>();
             builder.Services.AddScoped<ITeacherTestEditorService, TeacherTestEditorService>();
+            builder.Services.AddScoped<IStudentDashboardService, StudentDashboardService>();
+            builder.Services.AddScoped<IStudentTeachersService, StudentTeachersService>();
+            builder.Services.AddScoped<IStudentTestsService, StudentTestsService>();
+            builder.Services.AddScoped<IStudentResultsService, StudentResultsService>();
+            builder.Services.AddScoped<IStudentTestPassingService, StudentTestPassingService>();
+            builder.Services.AddScoped<ITeacherResultsService, TeacherResultsService>();
+
 
             builder.Services.AddIdentityCore<ApplicationUser>(options =>
                 {

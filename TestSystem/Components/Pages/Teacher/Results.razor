@@ -1,0 +1,70 @@
+﻿@page "/teacher/results"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using TestSystem.Entities.DTOs.Teacher
+
+@inject ITeacherResultsService ResultsService
+@inject AuthenticationStateProvider AuthProvider
+
+@attribute [Authorize]
+
+<NavLink href="/teacher" class="btn btn-outline-secondary mb-3">
+    ← Back to dashboard
+</NavLink>
+
+<PageTitle>Test results</PageTitle>
+
+<h3 class="mb-4">Test results</h3>
+
+@if (isLoading)
+{
+    <p class="text-muted">Loading...</p>
+}
+else if (!results.Any())
+{
+    <div class="alert alert-info">
+        No results yet.
+    </div>
+}
+else
+{
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Test</th>
+                <th>Student</th>
+                <th>Email</th>
+                <th class="text-center">Score</th>
+                <th class="text-center">Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in results)
+            {
+                <tr>
+                    <td>@r.TestTitle</td>
+                    <td>@r.StudentName</td>
+                    <td>@r.StudentEmail</td>
+                    <td class="text-center">@r.Score / @r.MaxScore</td>
+                    <td class="text-center">@r.CompletedDate.ToString("dd.MM.yyyy")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<TeacherResultDto> results = new();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthProvider.GetAuthenticationStateAsync();
+        var userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (userId != null)
+            results = await ResultsService.GetMyResultsAsync(userId);
+
+        isLoading = false;
+    }
+}
