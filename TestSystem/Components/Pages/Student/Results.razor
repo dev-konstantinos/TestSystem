@@ -2,11 +2,16 @@
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
 @using TestSystem.Entities.DTOs.Student
+@using TestSystem.ServiceLayer.Interfaces.Student
 
 @inject IStudentResultsService ResultsService
 @inject AuthenticationStateProvider Auth
 
 @attribute [Authorize]
+
+<NavLink href="/student" class="btn btn-outline-secondary mb-3">
+    ← Back to dashboard
+</NavLink>
 
 <h3 class="mb-4">My results</h3>
 

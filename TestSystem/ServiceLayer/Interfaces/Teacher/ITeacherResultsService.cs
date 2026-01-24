@@ -1,6 +1,6 @@
 ﻿using TestSystem.Entities.DTOs.Teacher;
 
-namespace TestSystem.ServiceLayer.Interfaces
+namespace TestSystem.ServiceLayer.Interfaces.Teacher
 {
     public interface ITeacherResultsService
     {

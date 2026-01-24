@@ -6,8 +6,12 @@ using TestSystem.Components.Account;
 using TestSystem.Data;
 using TestSystem.Infrastructure.Identity;
 using TestSystem.MainContext;
-using TestSystem.ServiceLayer.Interfaces;
-using TestSystem.ServiceLayer.Services;
+using TestSystem.ServiceLayer.Interfaces.Student;
+using TestSystem.ServiceLayer.Interfaces.Teacher;
+using TestSystem.ServiceLayer.Interfaces.Admin;
+using TestSystem.ServiceLayer.Services.Student;
+using TestSystem.ServiceLayer.Services.Teacher;
+using TestSystem.ServiceLayer.Services.Admin;
 
 namespace TestSystem
 {

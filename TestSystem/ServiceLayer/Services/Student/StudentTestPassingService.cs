@@ -2,9 +2,9 @@
 using TestSystem.Entities;
 using TestSystem.Entities.DTOs.Student;
 using TestSystem.MainContext;
-using TestSystem.ServiceLayer.Interfaces;
+using TestSystem.ServiceLayer.Interfaces.Student;
 
-namespace TestSystem.ServiceLayer.Services
+namespace TestSystem.ServiceLayer.Services.Student
 {
     // Service for managing student test taking and submission
     public class StudentTestPassingService : IStudentTestPassingService

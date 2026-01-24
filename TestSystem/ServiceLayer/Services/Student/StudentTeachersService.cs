@@ -2,9 +2,9 @@
 using TestSystem.Data;
 using TestSystem.Entities.DTOs.Student;
 using TestSystem.MainContext;
-using TestSystem.ServiceLayer.Interfaces;
+using TestSystem.ServiceLayer.Interfaces.Student;
 
-namespace TestSystem.ServiceLayer.Services
+namespace TestSystem.ServiceLayer.Services.Student
 {
     // Service to manage the relationship between students and their teachers
     public class StudentTeachersService : IStudentTeachersService

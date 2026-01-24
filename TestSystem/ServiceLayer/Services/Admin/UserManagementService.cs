@@ -1,17 +1,15 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using TestSystem.Data;
-using TestSystem.Entities;
-using TestSystem.Entities.DTOs.User;
+using TestSystem.Entities.DTOs.Admin;
 using TestSystem.Infrastructure.Identity;
 using TestSystem.MainContext;
-using TestSystem.ServiceLayer.Interfaces;
-using Microsoft.AspNetCore.Http;
-using System.Security.Claims;
+using TestSystem.ServiceLayer.Interfaces.Admin;
 
-
-namespace TestSystem.ServiceLayer.Services
+namespace TestSystem.ServiceLayer.Services.Admin
 {
+    // Class for managing user roles and synchronizing with business entities
     public class UserManagementService : IUserManagementService
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -28,6 +26,7 @@ namespace TestSystem.ServiceLayer.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
+        // Retrieves all users along with their roles and related business entity statuses
         public async Task<List<UserAdminDto>> GetAllAsync()
         {
             var users = await _userManager.Users.ToListAsync();
@@ -60,12 +59,13 @@ namespace TestSystem.ServiceLayer.Services
             return result;
         }
 
+        // Sets or unsets a role for a user and synchronizes with business entities
         public async Task SetRoleAsync(string userId, string role, bool enabled)
         {
             var user = await _userManager.FindByIdAsync(userId)
                 ?? throw new InvalidOperationException("User not found");
 
-            // SERVER-SIDE SELF-ADMIN PROTECTION
+            // protect against removing Admin role from oneself
             var currentUserId = _httpContextAccessor.HttpContext?
                 .User?
                 .FindFirst(ClaimTypes.NameIdentifier)?
@@ -97,6 +97,7 @@ namespace TestSystem.ServiceLayer.Services
                 await SyncTeacher(userId, enabled);
         }
 
+        // Synchronizes the Student entity based on role assignment
         private async Task SyncStudent(string userId, bool enabled)
         {
             var student = await _businessContext.Students
@@ -104,7 +105,7 @@ namespace TestSystem.ServiceLayer.Services
 
             if (enabled && student == null)
             {
-                _businessContext.Students.Add(new Student { UserId = userId });
+                _businessContext.Students.Add(new Entities.Student { UserId = userId });
                 await _businessContext.SaveChangesAsync();
             }
 
@@ -115,6 +116,7 @@ namespace TestSystem.ServiceLayer.Services
             }
         }
 
+        // Synchronizes the Teacher entity based on role assignment
         private async Task SyncTeacher(string userId, bool enabled)
         {
             var teacher = await _businessContext.Teachers
@@ -122,7 +124,7 @@ namespace TestSystem.ServiceLayer.Services
 
             if (enabled && teacher == null)
             {
-                _businessContext.Teachers.Add(new Teacher { UserId = userId });
+                _businessContext.Teachers.Add(new Entities.Teacher { UserId = userId });
                 await _businessContext.SaveChangesAsync();
             }
 

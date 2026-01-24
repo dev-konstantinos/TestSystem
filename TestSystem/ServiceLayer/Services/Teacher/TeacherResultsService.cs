@@ -2,9 +2,9 @@
 using TestSystem.Data;
 using TestSystem.Entities.DTOs.Teacher;
 using TestSystem.MainContext;
-using TestSystem.ServiceLayer.Interfaces;
+using TestSystem.ServiceLayer.Interfaces.Teacher;
 
-namespace TestSystem.ServiceLayer.Services
+namespace TestSystem.ServiceLayer.Services.Teacher
 {
     public class TeacherResultsService : ITeacherResultsService
     {

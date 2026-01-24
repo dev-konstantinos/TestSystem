@@ -2,9 +2,9 @@
 using TestSystem.Data;
 using TestSystem.Entities.DTOs.Student;
 using TestSystem.MainContext;
-using TestSystem.ServiceLayer.Interfaces;
+using TestSystem.ServiceLayer.Interfaces.Student;
 
-namespace TestSystem.ServiceLayer.Services
+namespace TestSystem.ServiceLayer.Services.Student
 {
     // Class to handle operations related to student tests
     public class StudentTestsService : IStudentTestsService
@@ -20,6 +20,7 @@ namespace TestSystem.ServiceLayer.Services
             _identityContext = identityDb;
         }
 
+        // Method to get available tests for a student
         public async Task<List<StudentAvailableTestDto>> GetAvailableTestsAsync(string studentUserId)
         {
             // 1️) Get student with related teachers, tests and questions

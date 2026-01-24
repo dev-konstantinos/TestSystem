@@ -2,9 +2,9 @@
 using TestSystem.Entities;
 using TestSystem.Entities.DTOs.Teacher;
 using TestSystem.MainContext;
-using TestSystem.ServiceLayer.Interfaces;
+using TestSystem.ServiceLayer.Interfaces.Teacher;
 
-namespace TestSystem.ServiceLayer.Services
+namespace TestSystem.ServiceLayer.Services.Teacher
 {
     // Class provides services related to retrieving tests assigned to a specific teacher
     public class TeacherTestsService : ITeacherTestsService
@@ -16,13 +16,13 @@ namespace TestSystem.ServiceLayer.Services
             _businessContext = db;
         }
 
-        // Retrieves all tests associated with a specific teacher at Teacher's Dashboard
+        // Retrieves all tests associated with a specific teacher
         public async Task<List<TeacherTestDto>> GetMyTestsAsync(string teacherUserId)
         {
             var teacherId = await _businessContext.Teachers
                 .Where(t => t.UserId == teacherUserId)
                 .Select(t => t.Id)
-                .FirstOrDefaultAsync(); //System.InvalidOperationException: 'A second operation was started on this context instance before a previous operation completed. This is usually caused by different threads concurrently using the same instance of DbContext. For more information on how to avoid threading issues with DbContext, see https://go.microsoft.com/fwlink/?linkid=2097913.'
+                .FirstOrDefaultAsync();
 
             if (teacherId == 0)
                 return new();

@@ -1,10 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TestSystem.Entities.DTOs.Student;
 using TestSystem.MainContext;
-using TestSystem.ServiceLayer.Interfaces;
+using TestSystem.ServiceLayer.Interfaces.Student;
 
-namespace TestSystem.ServiceLayer.Services
+namespace TestSystem.ServiceLayer.Services.Student
 {
+    // Class to manage student dashboard data retrieval
     public class StudentDashboardService : IStudentDashboardService
     {
         private readonly BusinessDbContext _businessContext;
@@ -14,6 +15,7 @@ namespace TestSystem.ServiceLayer.Services
             _businessContext = db;
         }
 
+        // method to get dashboard data for a student
         public async Task<StudentDashboardDto?> GetDashboardAsync(string studentUserId)
         {
             var studentId = await _businessContext.Students

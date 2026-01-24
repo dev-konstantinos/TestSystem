@@ -1,10 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TestSystem.Entities.DTOs.Teacher;
 using TestSystem.MainContext;
-using TestSystem.ServiceLayer.Interfaces;
+using TestSystem.ServiceLayer.Interfaces.Teacher;
 
-namespace TestSystem.ServiceLayer.Services
+namespace TestSystem.ServiceLayer.Services.Teacher
 {
+    // Service to get teacher dashboard data
     public class TeacherDashboardService : ITeacherDashboardService
     {
         private readonly BusinessDbContext _businessContext;
@@ -14,6 +15,7 @@ namespace TestSystem.ServiceLayer.Services
             _businessContext = db;
         }
 
+        // Get dashboard data for a specific teacher by user ID
         public async Task<TeacherDashboardDto?> GetDashboardAsync(string userId)
         {
             var teacher = await _businessContext.Teachers

@@ -1,6 +1,6 @@
 ﻿using TestSystem.Entities.DTOs.Student;
 
-namespace TestSystem.ServiceLayer.Interfaces
+namespace TestSystem.ServiceLayer.Interfaces.Student
 {
     public interface IStudentTestsService
     {

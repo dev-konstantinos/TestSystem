@@ -1,4 +1,4 @@
-﻿namespace TestSystem.Entities.DTOs.User
+﻿namespace TestSystem.Entities.DTOs.Admin
 {
     public class UserAdminDto
     {

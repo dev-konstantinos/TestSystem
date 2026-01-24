@@ -1,19 +1,10 @@
-overall: ************************************************************************************************************************
-
-1) Replace InvalidOperationException with custom exceptions for better error handling.
-
-admin/users: ******************************************************************************************************************
-
-1) Optimize the user list loading time with GetAllAsync method in UserManagementService.cs
-
-Services: ***********************************************************************************************************************
 
 1) Fast access or page reload causes race conditions in BusinessDbContext usage. Possible solution: use Factory instead of BusinessDbContext directly to ensure thread safety. Can cause problems!
 
-2) Find and fix bugs that occurs when teacher logs out and Admin logs in without restarting the application.
+2) "Test already completed" logic is flawed. If a student starts a test and then leaves without completing it, they should be able to retake the test later. Current implementation prevents this. We also need to throw an exception at the page.
 
 3) We need more precise and rational logic for students notes and grades calculation.
 
-StudentTestPassingService.cs: ***************************************************************************************************
+4) Optimize the user list loading time with GetAllAsync method in UserManagementService.cs
 
-1) "Test already completed" logic is flawed. If a student starts a test and then leaves without completing it, they should be able to retake the test later. Current implementation prevents this. We also need to throw an exception at the page.
+5) All exceptions should be visualized at the UI level for better user experience.

@@ -3,6 +3,7 @@
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
 @using TestSystem.Entities.DTOs.Teacher
+@using TestSystem.ServiceLayer.Interfaces.Teacher
 
 @inject ITeacherStudentsService StudentsService
 @inject AuthenticationStateProvider AuthStateProvider
@@ -39,7 +40,6 @@ else if (!isTeacher)
 }
 else
 {
-    @* ===== LIST MODE ===== *@
     @if (mode == PageMode.List)
     {
         if (!students.Any())
@@ -85,7 +85,6 @@ else
         }
     }
 
-    @* ===== ATTACH MODE ===== *@
     @if (mode == PageMode.Attach)
     {
         if (!availableStudents.Any())

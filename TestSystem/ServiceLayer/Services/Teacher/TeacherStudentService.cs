@@ -2,9 +2,9 @@
 using TestSystem.Data;
 using TestSystem.Entities.DTOs.Teacher;
 using TestSystem.MainContext;
-using TestSystem.ServiceLayer.Interfaces;
+using TestSystem.ServiceLayer.Interfaces.Teacher;
 
-namespace TestSystem.ServiceLayer.Services
+namespace TestSystem.ServiceLayer.Services.Teacher
 {
     // Class provides services related to retrieving students assigned to a specific teacher
     public class TeacherStudentsService : ITeacherStudentsService
@@ -182,7 +182,5 @@ namespace TestSystem.ServiceLayer.Services
             teacher.Students.Remove(student);
             await _businessContext.SaveChangesAsync();
         }
-
-
     }
 }

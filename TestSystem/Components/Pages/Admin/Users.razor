@@ -1,8 +1,9 @@
 ﻿@page "/admin/users"
 
-@using Microsoft.AspNetCore.Authorization
 @using System.Security.Claims
-@using TestSystem.Entities.DTOs.User
+@using Microsoft.AspNetCore.Authorization
+@using TestSystem.Entities.DTOs.Admin
+@using TestSystem.ServiceLayer.Interfaces.Admin
 
 @attribute [Authorize(Roles = AppRoles.Admin)]
 

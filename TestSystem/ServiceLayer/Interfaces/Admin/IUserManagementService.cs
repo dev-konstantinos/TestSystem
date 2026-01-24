@@ -1,6 +1,6 @@
-﻿using TestSystem.Entities.DTOs.User;
+﻿using TestSystem.Entities.DTOs.Admin;
 
-namespace TestSystem.ServiceLayer.Interfaces
+namespace TestSystem.ServiceLayer.Interfaces.Admin
 {
     public interface IUserManagementService
     {
