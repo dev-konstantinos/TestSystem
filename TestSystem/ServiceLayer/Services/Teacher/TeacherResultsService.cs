@@ -8,19 +8,21 @@ namespace TestSystem.ServiceLayer.Services.Teacher
 {
     public class TeacherResultsService : ITeacherResultsService
     {
-        private readonly BusinessDbContext _businessContext;
+        private readonly IDbContextFactory<BusinessDbContext> _dbFactory;
         private readonly ApplicationDbContext _identityContext;
 
         public TeacherResultsService(
-            BusinessDbContext businessDb,
+            IDbContextFactory<BusinessDbContext> dbFactory,
             ApplicationDbContext identityDb)
         {
-            _businessContext = businessDb;
+            _dbFactory = dbFactory;
             _identityContext = identityDb;
         }
 
         public async Task<List<TeacherResultDto>> GetMyResultsAsync(string teacherUserId)
         {
+            await using var _businessContext = await _dbFactory.CreateDbContextAsync();
+
             // 1️) Getting teacherId
             var teacherId = await _businessContext.Teachers
                 .Where(t => t.UserId == teacherUserId)

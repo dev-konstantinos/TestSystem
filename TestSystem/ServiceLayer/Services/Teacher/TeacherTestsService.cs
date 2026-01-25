@@ -9,16 +9,18 @@ namespace TestSystem.ServiceLayer.Services.Teacher
     // Class provides services related to retrieving tests assigned to a specific teacher
     public class TeacherTestsService : ITeacherTestsService
     {
-        private readonly BusinessDbContext _businessContext;
+        private readonly IDbContextFactory<BusinessDbContext> _dbFactory;
 
-        public TeacherTestsService(BusinessDbContext db)
+        public TeacherTestsService(IDbContextFactory<BusinessDbContext> dbFactory)
         {
-            _businessContext = db;
+            _dbFactory = dbFactory;
         }
 
         // Retrieves all tests associated with a specific teacher
         public async Task<List<TeacherTestDto>> GetMyTestsAsync(string teacherUserId)
         {
+            await using var _businessContext = await _dbFactory.CreateDbContextAsync();
+
             var teacherId = await _businessContext.Teachers
                 .Where(t => t.UserId == teacherUserId)
                 .Select(t => t.Id)
@@ -45,6 +47,8 @@ namespace TestSystem.ServiceLayer.Services.Teacher
         // Adds a new test and associates it with the specified teacher
         public async Task AddTestAsync(string teacherUserId, string title, string? description)
         {
+            await using var _businessContext = await _dbFactory.CreateDbContextAsync();
+
             var teacher = await _businessContext.Teachers
                 .FirstOrDefaultAsync(t => t.UserId == teacherUserId)
                 ?? throw new InvalidOperationException("Teacher not found");
@@ -65,6 +69,8 @@ namespace TestSystem.ServiceLayer.Services.Teacher
         // Deletes a test if the specified teacher is associated with it
         public async Task DeleteTestAsync(string teacherUserId, int testId)
         {
+            await using var _businessContext = await _dbFactory.CreateDbContextAsync();
+
             var test = await _businessContext.Tests
                 .Include(t => t.Teachers)
                 .FirstOrDefaultAsync(t => t.Id == testId)

@@ -1,4 +1,5 @@
 ﻿@page "/student/tests/{TestId:int}"
+
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
 @using TestSystem.Entities.DTOs.Student
@@ -10,11 +11,34 @@
 
 @attribute [Authorize]
 
+@if (AllAnswered)
+{
+    <NavLink href="/student" class="btn btn-outline-secondary mb-3">
+        ← Back to dashboard
+    </NavLink>
+}
+else
+{
+    <NavLink href="/student" class="btn btn-outline-secondary mb-3">
+        ← Back without submit
+    </NavLink>
+}
+
 <h3 class="mb-4">@test?.Title</h3>
 
 @if (test == null)
 {
     <p>Loading...</p>
+}
+else if (test.IsCompleted)
+{
+    <div class="alert alert-success">
+        You have already completed this test.
+    </div>
+
+    <NavLink class="btn btn-primary" href="/student/results">
+        View results
+    </NavLink>
 }
 else
 {
@@ -29,7 +53,8 @@ else
                     <div class="form-check">
                         <input class="form-check-input"
                                type="radio"
-                               name="q@q.QuestionId"
+                               name="@($"q{q.QuestionId}")"
+                               checked="@(answers.TryGetValue(q.QuestionId, out var v) && v == o.OptionId)"
                                @onchange="() => answers[q.QuestionId] = o.OptionId" />
                         <label class="form-check-label">
                             @o.Text
@@ -40,7 +65,9 @@ else
         </div>
     }
 
-    <button class="btn btn-success" @onclick="Submit">
+    <button class="btn btn-success"
+            disabled="@(!AllAnswered)"
+            @onclick="Submit">
         Submit test
     </button>
 }
@@ -51,6 +78,9 @@ else
     private StudentTestDto? test;
     private Dictionary<int, int> answers = new();
     private string? userId;
+
+    private bool AllAnswered =>
+        test != null && answers.Count == test.Questions.Count;
 
     protected override async Task OnInitializedAsync()
     {

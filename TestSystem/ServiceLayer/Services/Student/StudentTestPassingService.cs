@@ -9,41 +9,51 @@ namespace TestSystem.ServiceLayer.Services.Student
     // Service for managing student test taking and submission
     public class StudentTestPassingService : IStudentTestPassingService
     {
-        private readonly BusinessDbContext _businessContext;
+        private readonly IDbContextFactory<BusinessDbContext> _dbFactory;
 
-        public StudentTestPassingService(BusinessDbContext db)
+        public StudentTestPassingService(IDbContextFactory<BusinessDbContext> dbFactory)
         {
-            _businessContext = db;
+            _dbFactory = dbFactory;
         }
 
-        // Retrieves a test for a student to take, ensuring access and completion checks
+        // Retrieves a test for a student, including questions and options
         public async Task<StudentTestDto> GetTestAsync(string studentUserId, int testId)
         {
-            var student = await _businessContext.Students
+            await using var db = await _dbFactory.CreateDbContextAsync();
+
+            var student = await db.Students
                 .Include(s => s.Teachers)
                 .FirstOrDefaultAsync(s => s.UserId == studentUserId)
                 ?? throw new InvalidOperationException("Student not found");
 
-            var test = await _businessContext.Tests
+            var test = await db.Tests
                 .Include(t => t.Teachers)
                 .Include(t => t.Questions)
                     .ThenInclude(q => q.Options)
                 .FirstOrDefaultAsync(t => t.Id == testId)
                 ?? throw new InvalidOperationException("Test not found");
 
-            // access check
             if (!test.Teachers.Any(t => student.Teachers.Contains(t)))
                 throw new InvalidOperationException("Access denied");
 
-            // already completed check
-            if (await _businessContext.TestResults.AnyAsync(r =>
-                r.StudentId == student.Id && r.TestId == testId))
-                throw new InvalidOperationException("Test already completed");
+            var isCompleted = await db.TestResults.AnyAsync(r =>
+                r.StudentId == student.Id && r.TestId == testId);
+
+            if (isCompleted)
+            {
+                return new StudentTestDto
+                {
+                    TestId = test.Id,
+                    Title = test.Title,
+                    IsCompleted = true
+                };
+            }
 
             return new StudentTestDto
             {
                 TestId = test.Id,
                 Title = test.Title,
+                IsCompleted = false,
                 Questions = test.Questions.Select(q => new StudentQuestionDto
                 {
                     QuestionId = q.Id,
@@ -61,31 +71,33 @@ namespace TestSystem.ServiceLayer.Services.Student
         // Submits a student's test answers and calculates the score
         public async Task SubmitAsync(string studentUserId, StudentTestSubmitDto dto)
         {
-            var student = await _businessContext.Students
+            await using var db = await _dbFactory.CreateDbContextAsync();
+
+            var student = await db.Students
                 .FirstAsync(s => s.UserId == studentUserId);
 
-            var test = await _businessContext.Tests
+            if (await db.TestResults.AnyAsync(r =>
+                r.StudentId == student.Id && r.TestId == dto.TestId))
+                throw new InvalidOperationException("Test already completed");
+
+            var test = await db.Tests
                 .Include(t => t.Questions)
                     .ThenInclude(q => q.Options)
                 .FirstAsync(t => t.Id == dto.TestId);
-
-            if (await _businessContext.TestResults.AnyAsync(r =>
-                r.StudentId == student.Id && r.TestId == test.Id))
-                throw new InvalidOperationException("Already submitted");
 
             int score = 0;
 
             foreach (var q in test.Questions)
             {
-                if (!dto.Answers.TryGetValue(q.Id, out var selectedOptionId))
+                if (!dto.Answers.TryGetValue(q.Id, out var selectedOption))
                     continue;
 
                 var correct = q.Options.FirstOrDefault(o => o.IsCorrect);
-                if (correct != null && correct.Id == selectedOptionId)
+                if (correct != null && correct.Id == selectedOption)
                     score += q.Points;
             }
 
-            _businessContext.TestResults.Add(new TestResult
+            db.TestResults.Add(new TestResult
             {
                 StudentId = student.Id,
                 TestId = test.Id,
@@ -93,7 +105,7 @@ namespace TestSystem.ServiceLayer.Services.Student
                 CompletedDate = DateTime.UtcNow
             });
 
-            await _businessContext.SaveChangesAsync();
+            await db.SaveChangesAsync();
         }
     }
 }

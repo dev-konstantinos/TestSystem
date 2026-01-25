@@ -8,19 +8,21 @@ namespace TestSystem.ServiceLayer.Services.Teacher
     // Service to get teacher dashboard data
     public class TeacherDashboardService : ITeacherDashboardService
     {
-        private readonly BusinessDbContext _businessContext;
+        private readonly IDbContextFactory<BusinessDbContext> _dbFactory;
 
-        public TeacherDashboardService(BusinessDbContext db)
+        public TeacherDashboardService(IDbContextFactory<BusinessDbContext> dbFactory)
         {
-            _businessContext = db;
+            _dbFactory = dbFactory;
         }
 
         // Get dashboard data for a specific teacher by user ID
         public async Task<TeacherDashboardDto?> GetDashboardAsync(string userId)
         {
+            await using var _businessContext = await _dbFactory.CreateDbContextAsync();
+
             var teacher = await _businessContext.Teachers
                 .AsNoTracking()
-                .FirstOrDefaultAsync(t => t.UserId == userId); // System.InvalidOperationException: 'A second operation was started on this context instance before a previous operation completed. This is usually caused by different threads concurrently using the same instance of DbContext. For more information on how to avoid threading issues with DbContext, see https://go.microsoft.com/fwlink/?linkid=2097913.'
+                .FirstOrDefaultAsync(t => t.UserId == userId);
 
             if (teacher == null)
                 return null;

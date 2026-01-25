@@ -9,20 +9,22 @@ namespace TestSystem.ServiceLayer.Services.Student
     // Service to manage the relationship between students and their teachers
     public class StudentTeachersService : IStudentTeachersService
     {
-        private readonly BusinessDbContext _businessContext;
+        private readonly IDbContextFactory<BusinessDbContext> _dbFactory;
         private readonly ApplicationDbContext _identityContext;
 
         public StudentTeachersService(
-            BusinessDbContext businessDb,
+            IDbContextFactory<BusinessDbContext> dbFactory,
             ApplicationDbContext identityDb)
         {
-            _businessContext = businessDb;
+            _dbFactory = dbFactory;
             _identityContext = identityDb;
         }
 
         // method to get all teachers for a specific student
         public async Task<List<StudentTeacherDto>> GetMyTeachersAsync(string studentUserId)
         {
+            await using var _businessContext = await _dbFactory.CreateDbContextAsync();
+
             var studentId = await _businessContext.Students
                 .Where(s => s.UserId == studentUserId)
                 .Select(s => s.Id)

@@ -13,22 +13,24 @@ namespace TestSystem.ServiceLayer.Services.Admin
     public class UserManagementService : IUserManagementService
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly BusinessDbContext _businessContext;
+        private readonly IDbContextFactory<BusinessDbContext> _dbFactory;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         public UserManagementService(
             UserManager<ApplicationUser> userManager,
-            BusinessDbContext businessDb,
+            IDbContextFactory<BusinessDbContext> dbFactory,
             IHttpContextAccessor httpContextAccessor)
         {
             _userManager = userManager;
-            _businessContext = businessDb;
+            _dbFactory = dbFactory;
             _httpContextAccessor = httpContextAccessor;
         }
 
         // Retrieves all users along with their roles and related business entity statuses
         public async Task<List<UserAdminDto>> GetAllAsync()
         {
+            await using var _businessContext = await _dbFactory.CreateDbContextAsync();
+
             var users = await _userManager.Users.ToListAsync();
 
             var studentIds = await _businessContext.Students
@@ -62,6 +64,8 @@ namespace TestSystem.ServiceLayer.Services.Admin
         // Sets or unsets a role for a user and synchronizes with business entities
         public async Task SetRoleAsync(string userId, string role, bool enabled)
         {
+            await using var _businessContext = await _dbFactory.CreateDbContextAsync();
+
             var user = await _userManager.FindByIdAsync(userId)
                 ?? throw new InvalidOperationException("User not found");
 
@@ -100,6 +104,8 @@ namespace TestSystem.ServiceLayer.Services.Admin
         // Synchronizes the Student entity based on role assignment
         private async Task SyncStudent(string userId, bool enabled)
         {
+            await using var _businessContext = await _dbFactory.CreateDbContextAsync();
+
             var student = await _businessContext.Students
                 .FirstOrDefaultAsync(s => s.UserId == userId);
 
@@ -119,6 +125,8 @@ namespace TestSystem.ServiceLayer.Services.Admin
         // Synchronizes the Teacher entity based on role assignment
         private async Task SyncTeacher(string userId, bool enabled)
         {
+            await using var _businessContext = await _dbFactory.CreateDbContextAsync();
+
             var teacher = await _businessContext.Teachers
                 .FirstOrDefaultAsync(t => t.UserId == userId);
 

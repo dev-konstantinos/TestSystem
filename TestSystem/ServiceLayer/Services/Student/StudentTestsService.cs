@@ -9,20 +9,22 @@ namespace TestSystem.ServiceLayer.Services.Student
     // Class to handle operations related to student tests
     public class StudentTestsService : IStudentTestsService
     {
-        private readonly BusinessDbContext _businessContext;
+        private readonly IDbContextFactory<BusinessDbContext> _dbFactory;
         private readonly ApplicationDbContext _identityContext;
 
         public StudentTestsService(
-            BusinessDbContext businessDb,
+            IDbContextFactory<BusinessDbContext> dbFactory,
             ApplicationDbContext identityDb)
         {
-            _businessContext = businessDb;
+            _dbFactory = dbFactory;
             _identityContext = identityDb;
         }
 
         // Method to get available tests for a student
         public async Task<List<StudentAvailableTestDto>> GetAvailableTestsAsync(string studentUserId)
         {
+            await using var _businessContext = await _dbFactory.CreateDbContextAsync();
+
             // 1️) Get student with related teachers, tests and questions
             var student = await _businessContext.Students
                 .Include(s => s.Teachers)

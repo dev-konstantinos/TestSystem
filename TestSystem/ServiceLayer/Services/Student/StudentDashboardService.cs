@@ -8,16 +8,18 @@ namespace TestSystem.ServiceLayer.Services.Student
     // Class to manage student dashboard data retrieval
     public class StudentDashboardService : IStudentDashboardService
     {
-        private readonly BusinessDbContext _businessContext;
+        private readonly IDbContextFactory<BusinessDbContext> _dbFactory;
 
-        public StudentDashboardService(BusinessDbContext db)
+        public StudentDashboardService(IDbContextFactory<BusinessDbContext> dbFactory)
         {
-            _businessContext = db;
+            _dbFactory = dbFactory;
         }
 
         // method to get dashboard data for a student
         public async Task<StudentDashboardDto?> GetDashboardAsync(string studentUserId)
         {
+            await using var _businessContext = await _dbFactory.CreateDbContextAsync();
+
             var studentId = await _businessContext.Students
                 .Where(s => s.UserId == studentUserId)
                 .Select(s => s.Id)

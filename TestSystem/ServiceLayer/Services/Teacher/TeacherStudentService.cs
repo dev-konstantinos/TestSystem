@@ -9,20 +9,22 @@ namespace TestSystem.ServiceLayer.Services.Teacher
     // Class provides services related to retrieving students assigned to a specific teacher
     public class TeacherStudentsService : ITeacherStudentsService
     {
-        private readonly BusinessDbContext _businessContext;
+        private readonly IDbContextFactory<BusinessDbContext> _dbFactory;
         private readonly ApplicationDbContext _identityContext;
 
         public TeacherStudentsService(
-            BusinessDbContext db,
+            IDbContextFactory<BusinessDbContext> dbFactory,
             ApplicationDbContext identityDb)
         {
-            _businessContext = db;
+            _dbFactory = dbFactory;
             _identityContext = identityDb;
         }
 
         // Retrieves a list of students assigned to the specified teacher at Teacher's Dashboard
         public async Task<List<TeacherStudentDto>> GetMyStudentsAsync(string teacherUserId)
         {
+            await using var _businessContext = await _dbFactory.CreateDbContextAsync();
+
             var teacherId = await _businessContext.Teachers
                 .Where(t => t.UserId == teacherUserId)
                 .Select(t => t.Id)
@@ -82,6 +84,8 @@ namespace TestSystem.ServiceLayer.Services.Teacher
         // Retrieves a list of students not assigned to the specified teacher at Students page
         public async Task<List<TeacherStudentDto>> GetAvailableStudentsAsync(string teacherUserId)
         {
+            await using var _businessContext = await _dbFactory.CreateDbContextAsync();
+
             var teacherId = await _businessContext.Teachers
                 .Where(t => t.UserId == teacherUserId)
                 .Select(t => t.Id)
@@ -141,6 +145,8 @@ namespace TestSystem.ServiceLayer.Services.Teacher
         // Attaches a student to the specified teacher
         public async Task AttachStudentAsync(string teacherUserId, int studentId)
         {
+            await using var _businessContext = await _dbFactory.CreateDbContextAsync();
+
             // 1) Getting teacher
             var teacher = await _businessContext.Teachers
                 .Include(t => t.Students)
@@ -168,6 +174,8 @@ namespace TestSystem.ServiceLayer.Services.Teacher
         // Detaches a student from the specified teacher
         public async Task DetachStudentAsync(string teacherUserId, int studentId)
         {
+            await using var _businessContext = await _dbFactory.CreateDbContextAsync();
+
             var teacher = await _businessContext.Teachers
                 .Include(t => t.Students)
                 .FirstOrDefaultAsync(t => t.UserId == teacherUserId);

@@ -4,6 +4,8 @@
     {
         public int TestId { get; set; }
         public string Title { get; set; } = null!;
+        public bool IsCompleted { get; set; }
+
         public List<StudentQuestionDto> Questions { get; set; } = new();
     }
 }

@@ -43,12 +43,12 @@ namespace TestSystem
                 options.UseSqlServer(connectionString));
 
             // adding BusinessDbContext for main application data - replace with DbContextFactory to resolve issues with a lifetime!!!
-            builder.Services.AddDbContext<BusinessDbContext>(options =>
-                options.UseSqlServer(connectionString));
+            //builder.Services.AddDbContext<BusinessDbContext>(options =>
+            //    options.UseSqlServer(connectionString));
 
             // adding DbContextFactory for BusinessDbContext - alternative approach to resolve lifetime issues with BusinessDbContext
-            //builder.Services.AddDbContextFactory<BusinessDbContext>(options =>
-            //    options.UseSqlServer(connectionString));
+            builder.Services.AddDbContextFactory<BusinessDbContext>(options =>
+                options.UseSqlServer(connectionString));
 
             // adding database exception filter for development
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
