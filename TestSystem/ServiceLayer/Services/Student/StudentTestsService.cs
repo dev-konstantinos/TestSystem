@@ -36,7 +36,20 @@ namespace TestSystem.ServiceLayer.Services.Student
             if (student == null)
                 return new();
 
-            // 2️) Resolve teacher identity data
+            // 2) Get completed test results for the student
+            var completedResults = await _businessContext.TestResults
+                .Where(r => r.Student.UserId == studentUserId)
+                .Select(r => new
+                {
+                    r.TestId,
+                    r.Score
+                })
+                .ToListAsync();
+
+            var completedDict = completedResults
+                .ToDictionary(r => r.TestId, r => r.Score);
+
+            // 3) Resolve teacher identity data
             var teacherUserIds = student.Teachers
                 .Select(t => t.UserId)
                 .Distinct()
@@ -52,7 +65,7 @@ namespace TestSystem.ServiceLayer.Services.Student
                 })
                 .ToListAsync();
 
-            // 3️) Flatten tests, avoid duplicates, build DTO
+            // 4) Flatten tests, avoid duplicates, build DTO
             var tests = student.Teachers
                 .SelectMany(t => t.Tests.Select(test => new { Teacher = t, Test = test }))
                 .GroupBy(x => x.Test.Id)
@@ -61,13 +74,18 @@ namespace TestSystem.ServiceLayer.Services.Student
                     var item = g.First();
                     var teacherUser = teachers.First(u => u.Id == item.Teacher.UserId);
 
+                    var isCompleted = completedDict.TryGetValue(item.Test.Id, out var score);
+
                     return new StudentAvailableTestDto
                     {
                         TestId = item.Test.Id,
                         Title = item.Test.Title,
                         TeacherName = $"{teacherUser.FirstName} {teacherUser.LastName}",
                         QuestionsCount = item.Test.Questions.Count,
-                        MaxScore = item.Test.Questions.Sum(q => q.Points)
+                        MaxScore = item.Test.Questions.Sum(q => q.Points),
+
+                        IsCompleted = isCompleted,
+                        Score = isCompleted ? score : null
                     };
                 })
                 .ToList();

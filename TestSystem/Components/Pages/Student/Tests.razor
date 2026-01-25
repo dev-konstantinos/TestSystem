@@ -37,7 +37,8 @@ else
                 <th>Teacher</th>
                 <th class="text-center">Questions</th>
                 <th class="text-center">Max score</th>
-                <th class="text-center"></th>
+                <th class="text-center">Status</th>
+                <th class="text-center">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -48,11 +49,37 @@ else
                     <td>@t.TeacherName</td>
                     <td class="text-center">@t.QuestionsCount</td>
                     <td class="text-center">@t.MaxScore</td>
+
                     <td class="text-center">
-                        <NavLink class="btn btn-sm btn-primary"
-                                 href="@($"/student/tests/{t.TestId}")">
-                            Start
-                        </NavLink>
+                        @if (t.IsCompleted)
+                        {
+                            <span class="badge bg-success">
+                                Completed (@t.Score / @t.MaxScore)
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">
+                                Available
+                            </span>
+                        }
+                    </td>
+
+                    <td class="text-center">
+                        @if (!t.IsCompleted)
+                        {
+                            <NavLink class="btn btn-sm btn-primary"
+                                     href="@($"/student/tests/{t.TestId}")">
+                                Start
+                            </NavLink>
+                        }
+                        else
+                        {
+                            <NavLink class="btn btn-sm btn-outline-secondary"
+                                     href="/student/results">
+                                View result
+                            </NavLink>
+                        }
                     </td>
                 </tr>
             }
