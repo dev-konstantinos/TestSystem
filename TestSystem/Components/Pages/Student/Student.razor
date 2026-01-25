@@ -1,21 +1,32 @@
 ﻿@page "/student"
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using TestSystem.Data
 @using TestSystem.Entities.DTOs.Student
 @using TestSystem.ServiceLayer.Interfaces.Student
 
 @inject IStudentDashboardService StudentService
 @inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<ApplicationUser> UserManager
 
 @attribute [Authorize]
 
 <PageTitle>Student dashboard</PageTitle>
 
-<h3 class="mb-4">Student dashboard</h3>
-
 @if (isLoading)
 {
     <p class="text-muted">Loading...</p>
+}
+else if (!profileComplete)
+{
+    <div class="alert alert-warning">
+        Please complete your profile (first and last name) to continue.
+    </div>
+
+    <NavLink href="/Account/Manage" class="btn btn-primary">
+        Please complete profile to access student dashboard!
+    </NavLink>
 }
 else if (dashboard == null)
 {
@@ -25,6 +36,8 @@ else if (dashboard == null)
 }
 else
 {
+    <h3 class="mb-4">Student dashboard</h3>
+
     <div class="row g-3">
         <div class="col-md-4">
             <NavLink href="/student/teachers" class="text-decoration-none text-dark">
@@ -64,14 +77,29 @@ else
 @code {
     private StudentDashboardDto? dashboard;
     private bool isLoading = true;
+    private bool profileComplete;
 
     protected override async Task OnInitializedAsync()
     {
-        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
-        var userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var principal = authState.User;
 
-        if (userId != null)
-            dashboard = await StudentService.GetDashboardAsync(userId);
+        var user = await UserManager.GetUserAsync(principal);
+
+        if (user == null)
+        {
+            isLoading = false;
+            return;
+        }
+
+        profileComplete =
+            !string.IsNullOrWhiteSpace(user.FirstName) &&
+            !string.IsNullOrWhiteSpace(user.LastName);
+
+        if (profileComplete)
+        {
+            dashboard = await StudentService.GetDashboardAsync(user.Id);
+        }
 
         isLoading = false;
     }

@@ -1,7 +1,11 @@
-﻿@using Microsoft.EntityFrameworkCore
+﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using TestSystem.Data
 @using TestSystem.MainContext
+@using System.Security.Claims
 @implements IDisposable
 
+@inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthStateProvider
 @inject BusinessDbContext BusinessDb
@@ -16,15 +20,10 @@
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="auth">
-                <span class="bi bi-lock-nav-menu" aria-hidden="true"></span> Auth Required
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu"></span> Home
             </NavLink>
         </div>
 
@@ -32,28 +31,31 @@
             <Authorized>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="Account/Manage">
-                        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @context.User.Identity?.Name
+                        <span class="bi bi-person-fill-nav-menu"></span>
+                        @displayName
                     </NavLink>
                 </div>
+
                 <div class="nav-item px-3">
                     <form action="Account/Logout" method="post">
                         <AntiforgeryToken />
                         <input type="hidden" name="ReturnUrl" value="@currentUrl" />
                         <button type="submit" class="nav-link">
-                            <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
+                            <span class="bi bi-arrow-bar-left-nav-menu"></span> Logout
                         </button>
                     </form>
                 </div>
             </Authorized>
+
             <NotAuthorized>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="Account/Register">
-                        <span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
+                        <span class="bi bi-person-nav-menu"></span> Register
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="Account/Login">
-                        <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
+                        <span class="bi bi-person-badge-nav-menu"></span> Login
                     </NavLink>
                 </div>
             </NotAuthorized>
@@ -63,37 +65,29 @@
             <Authorized>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="admin/users">
-                        <span class="bi bi-people-fill-nav-menu" aria-hidden="true"></span> USERS
+                        <span class="bi bi-people-fill-nav-menu"></span> Users
                     </NavLink>
                 </div>
             </Authorized>
         </AuthorizeView>
 
-        <AuthorizeView>
-            <Authorized>
-                @if (isTeacher)
-                {
-                    <div class="nav-item px-3">
-                        <NavLink class="nav-link" href="teacher">
-                            <span class="bi bi-mortarboard-fill-nav-menu"></span> Teacher
-                        </NavLink>
-                    </div>
-                }
-            </Authorized>
-        </AuthorizeView>
+        @if (isTeacher)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="teacher">
+                    <span class="bi bi-mortarboard-fill-nav-menu"></span> Teacher
+                </NavLink>
+            </div>
+        }
 
-        <AuthorizeView>
-            <Authorized>
-                @if (isStudent)
-                {
-                    <div class="nav-item px-3">
-                        <NavLink class="nav-link" href="student">
-                            <span class="bi bi-book-fill-nav-menu"></span> Student
-                        </NavLink>
-                    </div>
-                }
-            </Authorized>
-        </AuthorizeView>
+        @if (isStudent)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="student">
+                    <span class="bi bi-book-fill-nav-menu"></span> Student
+                </NavLink>
+            </div>
+        }
 
     </nav>
 </div>
@@ -102,6 +96,7 @@
     private string? currentUrl;
     private bool isTeacher;
     private bool isStudent;
+    private string? displayName;
 
     protected override async Task OnInitializedAsync()
     {
@@ -109,19 +104,33 @@
         NavigationManager.LocationChanged += OnLocationChanged;
 
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var userId = authState.User
-            .FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)
-            ?.Value;
+        var principal = authState.User;
 
-        if (userId != null)
+        if (!principal.Identity?.IsAuthenticated ?? true)
+            return;
+
+        var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null)
+            return;
+
+        // roles (business)
+        isTeacher = await BusinessDb.Teachers
+            .AsNoTracking()
+            .AnyAsync(t => t.UserId == userId);
+
+        isStudent = await BusinessDb.Students
+            .AsNoTracking()
+            .AnyAsync(s => s.UserId == userId);
+
+        // identity user (for name)
+        var user = await UserManager.GetUserAsync(principal);
+        if (user != null)
         {
-            isTeacher = await BusinessDb.Teachers
-                .AsNoTracking()
-                .AnyAsync(t => t.UserId == userId);
-
-            isStudent = await BusinessDb.Students
-                .AsNoTracking()
-                .AnyAsync(s => s.UserId == userId);
+            displayName =
+                !string.IsNullOrWhiteSpace(user.FirstName) &&
+                !string.IsNullOrWhiteSpace(user.LastName)
+                    ? $"{user.FirstName} {user.LastName}"
+                    : user.Email;
         }
     }
 
@@ -136,4 +145,3 @@
         NavigationManager.LocationChanged -= OnLocationChanged;
     }
 }
-

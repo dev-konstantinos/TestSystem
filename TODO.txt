@@ -8,3 +8,5 @@
 5) All exceptions should be visualized at the UI level for better user experience.
 
 6) Think about page exception logic while "Is Loading..."
+
+7) Improve the logic of adding new questions to the test. Currently, it shows no questions available even when there are questions in the database.

@@ -3,19 +3,30 @@
 @using Microsoft.AspNetCore.Authorization
 @using TestSystem.Entities.DTOs.Teacher
 @using TestSystem.ServiceLayer.Interfaces.Teacher
+@using TestSystem.Data
+@using Microsoft.AspNetCore.Identity
 
 @inject ITeacherDashboardService TeacherService
 @inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<ApplicationUser> UserManager
 
 @attribute [Authorize]
 
 <PageTitle>Teacher dashboard</PageTitle>
 
-<h3 class="mb-4">Teacher dashboard</h3>
-
 @if (isLoading)
 {
     <p class="text-muted">Loading...</p>
+}
+else if (!profileComplete)
+{
+    <div class="alert alert-warning">
+        Please complete your profile (first and last name) to continue.
+    </div>
+
+    <NavLink href="/Account/Manage" class="btn btn-primary">
+        Please complete profile to access teacher dashboard!
+    </NavLink>
 }
 else if (dashboard == null)
 {
@@ -25,6 +36,8 @@ else if (dashboard == null)
 }
 else
 {
+    <h3 class="mb-4">Teacher dashboard</h3>
+
     <div class="row g-3">
         <div class="col-md-4">
             <NavLink href="/teacher/students" class="text-decoration-none text-dark">
@@ -50,12 +63,12 @@ else
 
         <div class="col-md-4">
             <NavLink href="/teacher/results" class="text-decoration-none text-dark">
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <h6>Results</h6>
-                    <h2>@dashboard.ResultsCount</h2>
+                <div class="card shadow-sm hover-pointer">
+                    <div class="card-body text-center">
+                        <h6>Results</h6>
+                        <h2>@dashboard.ResultsCount</h2>
+                    </div>
                 </div>
-            </div>
             </NavLink>
         </div>
     </div>
@@ -64,14 +77,29 @@ else
 @code {
     private TeacherDashboardDto? dashboard;
     private bool isLoading = true;
+    private bool profileComplete;
 
     protected override async Task OnInitializedAsync()
     {
-        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
-        var userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var principal = authState.User;
 
-        if (userId != null)
-            dashboard = await TeacherService.GetDashboardAsync(userId);
+        var user = await UserManager.GetUserAsync(principal);
+
+        if (user == null)
+        {
+            isLoading = false;
+            return;
+        }
+
+        profileComplete =
+            !string.IsNullOrWhiteSpace(user.FirstName) &&
+            !string.IsNullOrWhiteSpace(user.LastName);
+
+        if (profileComplete)
+        {
+            dashboard = await TeacherService.GetDashboardAsync(user.Id);
+        }
 
         isLoading = false;
     }

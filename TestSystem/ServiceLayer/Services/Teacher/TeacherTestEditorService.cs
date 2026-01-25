@@ -6,7 +6,7 @@ using TestSystem.ServiceLayer.Interfaces.Teacher;
 
 namespace TestSystem.ServiceLayer.Services.Teacher
 {
-    // Service class for teachers to edit tests, questions, and options
+    // Service for editing tests by teachers
     public class TeacherTestEditorService : ITeacherTestEditorService
     {
         private readonly IDbContextFactory<BusinessDbContext> _dbFactory;
@@ -16,30 +16,14 @@ namespace TestSystem.ServiceLayer.Services.Teacher
             _dbFactory = dbFactory;
         }
 
-        // Helper method to get a test owned by the teacher
-        private async Task<Test> GetOwnedTest(string teacherUserId, int testId)
+        // Get all questions for a test
+        public async Task<List<TeacherQuestionDto>> GetQuestionsAsync(
+            string teacherUserId,
+            int testId)
         {
-            await using var _businessContext = await _dbFactory.CreateDbContextAsync();
+            await using var db = await _dbFactory.CreateDbContextAsync();
 
-            var test = await _businessContext.Tests
-                .Include(t => t.Teachers)
-                .Include(t => t.Questions)
-                    .ThenInclude(q => q.Options)
-                .FirstOrDefaultAsync(t => t.Id == testId)
-                ?? throw new InvalidOperationException("Test not found");
-
-            if (!test.Teachers.Any(t => t.UserId == teacherUserId))
-                throw new InvalidOperationException("Access denied");
-
-            return test;
-        }
-
-        // Get all questions for a test owned by the teacher
-        public async Task<List<TeacherQuestionDto>> GetQuestionsAsync(string teacherUserId, int testId)
-        {
-            await using var _businessContext = await _dbFactory.CreateDbContextAsync();
-
-            var test = await GetOwnedTest(teacherUserId, testId);
+            var test = await GetOwnedTest(db, teacherUserId, testId);
 
             return test.Questions.Select(q => new TeacherQuestionDto
             {
@@ -55,12 +39,16 @@ namespace TestSystem.ServiceLayer.Services.Teacher
             }).ToList();
         }
 
-        // Add a new question to a test owned by the teacher
-        public async Task AddQuestionAsync(string teacherUserId, int testId, string text, int points)
+        // Add a question to a test
+        public async Task AddQuestionAsync(
+            string teacherUserId,
+            int testId,
+            string text,
+            int points)
         {
-            await using var _businessContext = await _dbFactory.CreateDbContextAsync();
+            await using var db = await _dbFactory.CreateDbContextAsync();
 
-            var test = await GetOwnedTest(teacherUserId, testId);
+            var test = await GetOwnedTest(db, teacherUserId, testId);
 
             test.Questions.Add(new Question
             {
@@ -68,16 +56,19 @@ namespace TestSystem.ServiceLayer.Services.Teacher
                 Points = points
             });
 
-            await _businessContext.SaveChangesAsync();
-            await RecalculateMaxScoreAsync(test.Id);
+            await db.SaveChangesAsync();
+            await RecalculateMaxScoreAsync(db, test.Id);
+            await db.SaveChangesAsync();
         }
 
-        // Delete a question from a test owned by the teacher
-        public async Task DeleteQuestionAsync(string teacherUserId, int questionId)
+        // Delete a question
+        public async Task DeleteQuestionAsync(
+            string teacherUserId,
+            int questionId)
         {
-            await using var _businessContext = await _dbFactory.CreateDbContextAsync();
+            await using var db = await _dbFactory.CreateDbContextAsync();
 
-            var question = await _businessContext.Questions
+            var question = await db.Questions
                 .Include(q => q.Test)
                     .ThenInclude(t => t.Teachers)
                 .FirstOrDefaultAsync(q => q.Id == questionId)
@@ -88,20 +79,25 @@ namespace TestSystem.ServiceLayer.Services.Teacher
 
             var testId = question.TestId;
 
-            _businessContext.Questions.Remove(question);
+            db.Questions.Remove(question);
 
-            await _businessContext.SaveChangesAsync();
-            await RecalculateMaxScoreAsync(testId);
+            await RecalculateMaxScoreAsync(db, testId);
+            await db.SaveChangesAsync();
         }
 
-        // Add a new option to a question owned by the teacher
-        public async Task AddOptionAsync(string teacherUserId, int questionId, string text, bool isCorrect)
+        // Add an option to a question
+        public async Task AddOptionAsync(
+            string teacherUserId,
+            int questionId,
+            string text,
+            bool isCorrect)
         {
-            await using var _businessContext = await _dbFactory.CreateDbContextAsync();
+            await using var db = await _dbFactory.CreateDbContextAsync();
 
-            var question = await _businessContext.Questions
+            var question = await db.Questions
                 .Include(q => q.Test)
                     .ThenInclude(t => t.Teachers)
+                .Include(q => q.Options)
                 .FirstOrDefaultAsync(q => q.Id == questionId)
                 ?? throw new InvalidOperationException("Question not found");
 
@@ -114,15 +110,17 @@ namespace TestSystem.ServiceLayer.Services.Teacher
                 IsCorrect = isCorrect
             });
 
-            await _businessContext.SaveChangesAsync();
+            await db.SaveChangesAsync();
         }
 
-        // Delete an option from a question owned by the teacher
-        public async Task DeleteOptionAsync(string teacherUserId, int optionId)
+        // Delete an option
+        public async Task DeleteOptionAsync(
+            string teacherUserId,
+            int optionId)
         {
-            await using var _businessContext = await _dbFactory.CreateDbContextAsync();
+            await using var db = await _dbFactory.CreateDbContextAsync();
 
-            var option = await _businessContext.Options
+            var option = await db.Options
                 .Include(o => o.Question)
                     .ThenInclude(q => q.Test)
                         .ThenInclude(t => t.Teachers)
@@ -132,25 +130,40 @@ namespace TestSystem.ServiceLayer.Services.Teacher
             if (!option.Question.Test.Teachers.Any(t => t.UserId == teacherUserId))
                 throw new InvalidOperationException("Access denied");
 
-            _businessContext.Options.Remove(option);
-            await _businessContext.SaveChangesAsync();
+            db.Options.Remove(option);
+            await db.SaveChangesAsync();
         }
 
-        // Recalculate the maximum score for a test based on its questions
-        private async Task RecalculateMaxScoreAsync(int testId)
+        // Helper to get a test owned by the teacher
+        private async Task<Test> GetOwnedTest(
+            BusinessDbContext db,
+            string teacherUserId,
+            int testId)
         {
-            await using var _businessContext = await _dbFactory.CreateDbContextAsync();
+            var test = await db.Tests
+                .Include(t => t.Teachers)
+                .Include(t => t.Questions)
+                    .ThenInclude(q => q.Options)
+                .FirstOrDefaultAsync(t => t.Id == testId)
+                ?? throw new InvalidOperationException("Test not found");
 
-            var maxScore = await _businessContext.Questions
+            if (!test.Teachers.Any(t => t.UserId == teacherUserId))
+                throw new InvalidOperationException("Access denied");
+
+            return test;
+        }
+
+        // Helper to recalculate the max score of a test
+        private async Task RecalculateMaxScoreAsync(
+            BusinessDbContext db,
+            int testId)
+        {
+            var maxScore = await db.Questions
                 .Where(q => q.TestId == testId)
                 .SumAsync(q => q.Points);
 
-            var test = await _businessContext.Tests
-                .FirstAsync(t => t.Id == testId);
-
+            var test = await db.Tests.FirstAsync(t => t.Id == testId);
             test.MaxScore = maxScore;
-
-            await _businessContext.SaveChangesAsync();
         }
     }
 }
