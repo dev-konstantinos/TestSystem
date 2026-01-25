@@ -65,7 +65,7 @@ namespace TestSystem.ServiceLayer.Services.Teacher
                 })
                 .ToListAsync();
 
-            // 4️) Collect final results
+            // 4️) Mapping results to DTO
             return results.Select(r =>
             {
                 var user = users.First(u => u.Id == r.UserId);
@@ -82,6 +82,32 @@ namespace TestSystem.ServiceLayer.Services.Teacher
                     CompletedDate = r.CompletedDate
                 };
             }).ToList();
+        }
+
+        public async Task ResetStudentTestAsync(string teacherUserId, int studentId, int testId)
+        {
+            await using var db = await _dbFactory.CreateDbContextAsync();
+
+            // Access check: test belongs to teacher
+            var ownsTest = await db.Tests
+                .AnyAsync(t =>
+                    t.Id == testId &&
+                    t.Teachers.Any(tt => tt.UserId == teacherUserId));
+
+            if (!ownsTest)
+                throw new InvalidOperationException("Access denied");
+
+            // Remove test result
+            var result = await db.TestResults
+                .FirstOrDefaultAsync(r =>
+                    r.StudentId == studentId &&
+                    r.TestId == testId);
+
+            if (result != null)
+            {
+                db.TestResults.Remove(result);
+                await db.SaveChangesAsync();
+            }
         }
     }
 }

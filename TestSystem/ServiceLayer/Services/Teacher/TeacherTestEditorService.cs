@@ -81,6 +81,7 @@ namespace TestSystem.ServiceLayer.Services.Teacher
 
             db.Questions.Remove(question);
 
+            await db.SaveChangesAsync();
             await RecalculateMaxScoreAsync(db, testId);
             await db.SaveChangesAsync();
         }

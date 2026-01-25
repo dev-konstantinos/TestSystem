@@ -1,12 +1,8 @@
 
-2) "Test already completed" logic is flawed. If a student starts a test and then leaves without completing it, they should be able to retake the test later. Current implementation prevents this. We also need to throw an exception at the page.
-
-3) I need more precise and rational logic for students notes and grades calculation.
-
-4) Optimize the user list loading time with GetAllAsync method in UserManagementService.cs
+1) Implement an opportunity to give a second chance to the student if they fail the test.
 
 5) All exceptions should be visualized at the UI level for better user experience.
 
 6) Think about page exception logic while "Is Loading..."
 
-7) Improve the logic of adding new questions to the test. Currently, it shows no questions available even when there are questions in the database.
+

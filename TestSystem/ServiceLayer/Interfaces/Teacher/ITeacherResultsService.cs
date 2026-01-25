@@ -5,5 +5,6 @@ namespace TestSystem.ServiceLayer.Interfaces.Teacher
     public interface ITeacherResultsService
     {
         Task<List<TeacherResultDto>> GetMyResultsAsync(string teacherUserId);
+        Task ResetStudentTestAsync(string teacherUserId, int studentId, int testId);
     }
 }

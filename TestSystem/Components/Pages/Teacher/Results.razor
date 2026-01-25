@@ -37,6 +37,7 @@ else
                 <th>Email</th>
                 <th class="text-center">Score</th>
                 <th class="text-center">Date</th>
+                <th class="text-center">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -48,6 +49,12 @@ else
                     <td>@r.StudentEmail</td>
                     <td class="text-center">@r.Score / @r.MaxScore</td>
                     <td class="text-center">@r.CompletedDate.ToString("dd.MM.yyyy")</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-warning"
+                                @onclick="() => Reset(r.StudentId, r.TestId)">
+                            Reset
+                        </button>
+                    </td>
                 </tr>
             }
         </tbody>
@@ -57,15 +64,25 @@ else
 @code {
     private List<TeacherResultDto> results = new();
     private bool isLoading = true;
+    private string? userId;
 
     protected override async Task OnInitializedAsync()
     {
         var auth = await AuthProvider.GetAuthenticationStateAsync();
-        var userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (userId != null)
             results = await ResultsService.GetMyResultsAsync(userId);
 
         isLoading = false;
+    }
+
+    private async Task Reset(int studentId, int testId)
+    {
+        if (userId == null)
+            return;
+
+        await ResultsService.ResetStudentTestAsync(userId, studentId, testId);
+        results = await ResultsService.GetMyResultsAsync(userId);
     }
 }
