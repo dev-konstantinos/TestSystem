@@ -1,5 +1,7 @@
 <Solution>
   <Folder Name="/Solution Items/">
+    <File Path="../../../Desktop/BusinessDataDiagram.png" />
+    <File Path="../../../Desktop/IdentityDataDiagram.png" />
     <File Path="README.txt" />
     <File Path="TODO.txt" />
   </Folder>
