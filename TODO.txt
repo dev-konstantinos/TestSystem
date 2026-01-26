@@ -1,6 +1,4 @@
 
-1) Implement an opportunity to give a second chance to the student if they fail the test.
-
 5) All exceptions should be visualized at the UI level for better user experience.
 
 6) Think about page exception logic while "Is Loading..."

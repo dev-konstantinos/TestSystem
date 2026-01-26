@@ -6,7 +6,6 @@
 @implements IDisposable
 
 @inject UserManager<ApplicationUser> UserManager
-@inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthStateProvider
 @inject BusinessDbContext BusinessDb
 
@@ -39,7 +38,6 @@
                 <div class="nav-item px-3">
                     <form action="Account/Logout" method="post">
                         <AntiforgeryToken />
-                        <input type="hidden" name="ReturnUrl" value="@currentUrl" />
                         <button type="submit" class="nav-link">
                             <span class="bi bi-arrow-bar-left-nav-menu"></span> Logout
                         </button>
@@ -93,16 +91,12 @@
 </div>
 
 @code {
-    private string? currentUrl;
     private bool isTeacher;
     private bool isStudent;
     private string? displayName;
 
     protected override async Task OnInitializedAsync()
     {
-        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-        NavigationManager.LocationChanged += OnLocationChanged;
-
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var principal = authState.User;
 
@@ -134,14 +128,5 @@
         }
     }
 
-    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
-    {
-        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
-        StateHasChanged();
-    }
-
-    public void Dispose()
-    {
-        NavigationManager.LocationChanged -= OnLocationChanged;
-    }
+    public void Dispose() { }
 }

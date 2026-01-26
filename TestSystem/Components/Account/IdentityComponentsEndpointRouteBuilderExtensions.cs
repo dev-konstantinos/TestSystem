@@ -41,14 +41,14 @@ namespace Microsoft.AspNetCore.Routing
                 return TypedResults.Challenge(properties, [provider]);
             });
 
+            // Logout endpoint was changed to enchance security and UX.
             accountGroup.MapPost("/Logout", async (
-                ClaimsPrincipal user,
-                [FromServices] SignInManager<ApplicationUser> signInManager,
-                [FromForm] string returnUrl) =>
+                [FromServices] SignInManager<ApplicationUser> signInManager) =>
             {
                 await signInManager.SignOutAsync();
-                return TypedResults.LocalRedirect($"~/{returnUrl}");
+                return TypedResults.Redirect("/"); // Redirect to home page after logout
             });
+
 
             accountGroup.MapPost("/PasskeyCreationOptions", async (
                 HttpContext context,
