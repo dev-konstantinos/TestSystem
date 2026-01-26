@@ -1,6 +1,8 @@
 
 5) All exceptions should be visualized at the UI level for better user experience.
 
-6) Think about page exception logic while "Is Loading..."
+6) Think about page exception logic while "Is Loading..." state.
+
+7) Add Resend Confirmation Email functionality + button at Login page?
 
 

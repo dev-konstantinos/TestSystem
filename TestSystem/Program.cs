@@ -71,7 +71,7 @@ namespace TestSystem
 
             builder.Services.AddIdentityCore<ApplicationUser>(options =>
                 {
-                    options.SignIn.RequireConfirmedAccount = false; // account confirmation doesnt require emails
+                    options.SignIn.RequireConfirmedAccount = true; // account confirmation doesnt require emails
                     options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
                 })
                 .AddRoles<IdentityRole>() // adding roles to Identity
@@ -83,27 +83,51 @@ namespace TestSystem
 
             var app = builder.Build();
 
-            using (var scope = app.Services.CreateScope()) // creating possible roles list and defining admin user by default
+            using (var scope = app.Services.CreateScope())
             {
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
                 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-                string[] roles = { AppRoles.Admin, AppRoles.User, AppRoles.Teacher, AppRoles.Student }; // roles with AppRoles
+                string[] roles = { AppRoles.Admin, AppRoles.User, AppRoles.Teacher, AppRoles.Student }; // possible roles
 
                 foreach (var role in roles)
+                {
                     if (!await roleManager.RoleExistsAsync(role))
                         await roleManager.CreateAsync(new IdentityRole(role));
+                }
 
-                var adminEmail = "admin@example.com";
+                // reading admin data from appsettings.json
+                var adminSection = builder.Configuration.GetSection("AdminSeed");
+
+                var adminEmail = adminSection["Email"];
+                var adminPassword = adminSection["Password"];
+                var confirmEmail = bool.TryParse(adminSection["ConfirmEmail"], out var c) && c;
+
+                if (string.IsNullOrWhiteSpace(adminEmail) || string.IsNullOrWhiteSpace(adminPassword))
+                    throw new InvalidOperationException("AdminSeed configuration is missing");
+
                 var admin = await userManager.FindByEmailAsync(adminEmail);
 
                 if (admin == null)
                 {
-                    admin = new ApplicationUser { UserName = adminEmail, Email = adminEmail };
-                    await userManager.CreateAsync(admin, "Admin123!");
+                    admin = new ApplicationUser
+                    {
+                        UserName = adminEmail,
+                        Email = adminEmail,
+                        EmailConfirmed = confirmEmail
+                    };
+
+                    var result = await userManager.CreateAsync(admin, adminPassword);
+
+                    if (!result.Succeeded)
+                        throw new InvalidOperationException(
+                            "Failed to create admin: " +
+                            string.Join(", ", result.Errors.Select(e => e.Description)));
+
                     await userManager.AddToRolesAsync(admin, new[] { AppRoles.Admin, AppRoles.User });
                 }
             }
+
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

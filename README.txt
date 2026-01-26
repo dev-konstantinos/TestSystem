@@ -49,3 +49,14 @@ This functionality can be easily extended in the future thanks to the flexible l
 3. Apply migrations and run the application
 
 Note: Windows Authentication is used by default for local development. You may change it to SQL authentication if needed.
+
+### Email confirmation
+
+Email confirmation is required for newly registered users to ensure valid email addresses (only local by default).
+
+## Default admin account (development only)
+
+Email: admin@example.com  
+Password: Admin123!
+
+This account is created automatically on first run.
