@@ -54,9 +54,9 @@ Note: Windows Authentication is used by default for local development. You may c
 
 Email confirmation is required for newly registered users to ensure valid email addresses (only local by default).
 
-## Default admin account (development only)
+## Default admin account
 
-Email: admin@example.com  
+Email: admin@example.com
 Password: Admin123!
 
 This account is created automatically on first run.
