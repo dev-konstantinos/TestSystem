@@ -3,6 +3,6 @@
 
 6) Think about page exception logic while "Is Loading..." state.
 
-7) Add Resend Confirmation Email functionality + button at Login page?
+7) Add Resend Confirmation Email functionality + button at Login page
 
-
+8) Correct interactions between the existing and deleted users and their data.

@@ -18,11 +18,23 @@
 
 @if (emailConfirmationLink is not null)
 {
-    <p>
-        This app does not currently have a real email sender registered, see <a href="https://aka.ms/aspaccountconf">these docs</a> for how to configure a real email sender.
-        Normally this would be emailed: <a href="@emailConfirmationLink">Click here to confirm your account</a>
-    </p>
+    <div class="alert alert-info">
+        <p class="mb-2">
+            <strong>Development mode:</strong> email sending is not configured.
+            Confirmation emails are not sent automatically.
+        </p>
+
+        <p class="mb-2">
+            To confirm your email address, use the link below:
+        </p>
+
+        <a class="btn btn-success"
+           href="@emailConfirmationLink">
+            Confirm email address
+        </a>
+    </div>
 }
+
 else
 {
     <p role="alert">Please check your email to confirm your account.</p>

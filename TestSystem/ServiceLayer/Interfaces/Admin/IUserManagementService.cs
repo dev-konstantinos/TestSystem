@@ -6,5 +6,6 @@ namespace TestSystem.ServiceLayer.Interfaces.Admin
     {
         Task<List<UserAdminDto>> GetAllAsync();
         Task SetRoleAsync(string userId, string role, bool enabled);
+        Task DeleteUserAsync(string userId);
     }
 }

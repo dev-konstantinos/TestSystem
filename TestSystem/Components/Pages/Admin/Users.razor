@@ -44,6 +44,7 @@ else
                     <th class="text-center">Admin</th>
                     <th class="text-center">Student</th>
                     <th class="text-center">Teacher</th>
+                    <th class="text-center">Delete</th>
                 </tr>
             </thead>
             <tbody>
@@ -74,13 +75,22 @@ else
                                    checked="@u.IsTeacher"
                                    @onchange="async e => await ChangeRole(u, AppRoles.Teacher, (bool)e.Value!)" />
                         </td>
+
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-danger"
+                                    disabled="@(!u.CanBeDeleted)"
+                                    @onclick="() => DeleteUser(u.UserId)">
+                                Delete
+                            </button>
+                        </td>
+
                     </tr>
                 }
 
                 @if (!users.Any())
                 {
                     <tr>
-                        <td colspan="5" class="text-center text-muted fst-italic py-4">
+                        <td colspan="6" class="text-center text-muted fst-italic py-4">
                             No users found
                         </td>
                     </tr>
@@ -137,6 +147,19 @@ else
         {
             await UserService.SetRoleAsync(user.UserId, role, enabled);
             await Load(); // simpler to reload the list to reflect changes
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+    }
+
+    private async Task DeleteUser(string userId)
+    {
+        try
+        {
+            await UserService.DeleteUserAsync(userId);
+            await Load();
         }
         catch (Exception ex)
         {

@@ -101,6 +101,39 @@ namespace TestSystem.ServiceLayer.Services.Admin
                 await SyncTeacher(userId, enabled);
         }
 
+        // Deletes a user after ensuring no business roles are assigned (temporarily solution)
+        public async Task DeleteUserAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId)
+                ?? throw new InvalidOperationException("User not found");
+
+            // not allow deleting oneself
+            var currentUserId = _httpContextAccessor.HttpContext?
+                .User?
+                .FindFirst(ClaimTypes.NameIdentifier)?
+                .Value;
+
+            if (userId == currentUserId)
+                throw new InvalidOperationException("You cannot delete yourself");
+
+            // checking for existing business roles
+            await using var businessContext = await _dbFactory.CreateDbContextAsync();
+
+            var isStudent = await businessContext.Students.AnyAsync(s => s.UserId == userId);
+            var isTeacher = await businessContext.Teachers.AnyAsync(t => t.UserId == userId);
+
+            if (isStudent || isTeacher)
+                throw new InvalidOperationException(
+                    "User has business roles. Remove roles before deleting.");
+
+            // delete user from Identity
+            var result = await _userManager.DeleteAsync(user);
+
+            if (!result.Succeeded)
+                throw new InvalidOperationException(
+                    string.Join(", ", result.Errors.Select(e => e.Description)));
+        }
+
         // Synchronizes the Student entity based on role assignment
         private async Task SyncStudent(string userId, bool enabled)
         {
