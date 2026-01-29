@@ -31,7 +31,7 @@ Key design decisions:
 - Direct use of EF Core DbContext inside services (Repository layer intentionally omitted in favor of simplicity and performance)
 - Instead of sharing DbContext instances across services and components, the application uses IDbContextFactory<TContext> to create short-lived DbContext instances. This approach prevents concurrency exceptions and works more stable in Blazor Server.
 
-## Roles
+### Roles
 
 - Identity roles: Admin / User (clean roles for authentication and authorization)
 - Business roles: Teacher / Student (used only to access business functionality)
