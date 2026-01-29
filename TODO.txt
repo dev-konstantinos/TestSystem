@@ -1,8 +1,47 @@
+### TODO / Future improvements
 
-5) All exceptions should be visualized at the UI level for better user experience.
+1. Error handling and user experience
 
-6) Think about page exception logic while "Is Loading..." state.
+Centralize exception handling and ensure all unhandled exceptions are consistently visualized at the UI level.
 
-7) Add Resend Confirmation Email functionality + button at Login page
+Replace raw error states with user-friendly messages and clear recovery paths.
 
-8) Correct interactions between the existing and deleted users and their data.
+Review exception behavior during page initialization and data loading phases.
+
+2. Loading and page state management
+
+Improve page lifecycle handling while data is loading (IsLoading state situations).
+
+Prevent situations where a page remains stuck in a loading state due to failed requests or exceptions.
+
+Add fallback UI states (error / empty / retry) for all data-driven pages.
+
+3. Email confirmation flow
+
+Add Resend Confirmation Email functionality.
+
+Expose a dedicated button or link on the Login page for users with unconfirmed email addresses.
+
+Ensure the resend flow works both with the current local setup and with a future email provider.
+
+4. User lifecycle consistency
+
+Review and harden interactions between existing, deleted, and partially configured users.
+
+Ensure that deleting a user does not leave orphaned data or inconsistent business state.
+
+Define clear rules for handling users with business roles (Teacher / Student) during deletion.
+
+5. Security hardening before production use
+
+Move sensitive configuration (connection strings, admin seed credentials) out of appsettings.json:
+
+Use environment variables or a secure secrets provider.
+
+Rework admin seeding logic:
+
+Avoid hardcoded credentials.
+
+Limit automatic admin creation to development scenarios only.
+
+Review authentication, authorization, and data access boundaries before enabling public deployment.

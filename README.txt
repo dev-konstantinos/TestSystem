@@ -13,6 +13,7 @@ The application is built using the following technologies:
 - EF Core for data access
 - Identity for user management
 - SQL Server as the database
+- xUnit for unit testing
 
 This stack ensures a robust, scalable, and maintainable solution and requires no / minimum JS for UI development and support.
 
@@ -42,6 +43,12 @@ The application supports the following main flows, which can be accessed based o
 
 This functionality can be easily extended in the future thanks to the flexible layered structure of the application.
 
+## Testing
+
+The project is covered with xUnit tests for the service layer.
+
+AI tools were used to help design test cases, edge conditions, and coverage scenarios, while all tests were manually reviewed, adapted, and validated against real application behavior. This approach helped to improve test consistency without compromising code quality.
+
 ## How to run
 
 1. Clone repository
@@ -60,3 +67,7 @@ Email: admin@example.com
 Password: Admin123!
 
 This account is created automatically on first run.
+
+### Notes
+
+At the current stage, the application is intended for local development and demonstration purposes only. Several security-related decisions were made intentionally to simplify development and testing and must be revisited before production use.

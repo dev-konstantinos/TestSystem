@@ -6,5 +6,6 @@
     <File Path="README.txt" />
     <File Path="TODO.txt" />
   </Folder>
+  <Project Path="Tests/Tests.csproj" Id="15b657a2-561b-4174-af52-bef6245e8f25" />
   <Project Path="TestSystem/TestSystem.csproj" />
 </Solution>
