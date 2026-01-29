@@ -17,6 +17,10 @@ The application is built using the following technologies:
 
 This stack ensures a robust, scalable, and maintainable solution and requires no / minimum JS for UI development and support.
 
+Data diagrams (.png) and User Guide (.pdf) are available in the repository for better understanding of the application and its usage.
+
+Future improvements list is available in TODO.txt file, showing possible next steps for the app development.
+
 ## Architecture overview
 
 The application follows a layered architecture with a strong focus on clear responsibility boundaries and safe data access.
